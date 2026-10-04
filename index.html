@@ -1,0 +1,3559 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dairy Puzzle Quiz</title>
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#00f3ff',
+                        secondary: '#ff00ff',
+                        bgDark: '#050505',
+                        surface: '#111111',
+                        accent: '#39ff14',
+                        bomb: '#ff003c'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'Sarabun', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    },
+                    animation: {
+                        'wiggle': 'wiggle 0.3s ease-in-out infinite',
+                        'explode': 'explode 0.5s ease-out forwards',
+                        'defuse': 'defuse 0.5s ease-out forwards',
+                        'blob': 'blob 7s infinite',
+                        'fade-in': 'fadeIn 0.3s ease-out forwards'
+                    },
+                    keyframes: {
+                        wiggle: {
+                            '0%, 100%': { transform: 'rotate(-3deg)' },
+                            '50%': { transform: 'rotate(3deg)' },
+                        },
+                        explode: {
+                            '0%': { transform: 'scale(1)', opacity: 1 },
+                            '50%': { transform: 'scale(1.5)', opacity: 0.8 },
+                            '100%': { transform: 'scale(0)', opacity: 0 }
+                        },
+                        defuse: {
+                            '0%': { transform: 'scale(1)' },
+                            '50%': { transform: 'scale(1.2)' },
+                            '100%': { transform: 'scale(0)', opacity: 0 }
+                        },
+                        blob: {
+                            '0%': { transform: 'translate(0px, 0px) scale(1)' },
+                            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+                            '100%': { transform: 'translate(0px, 0px) scale(1)' }
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&family=Press+Start+2P&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- SortableJS -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <!-- QR Code Features -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
+
+    <style>
+        /* Custom CSS */
+        body {
+            background-color: #0f172a;
+            color: white;
+            overflow-x: hidden;
+            overscroll-behavior-y: none; /* Prevent bounce scrolling on mobile */
+            font-family: 'Inter', 'Sarabun', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .hidden-screen {
+            display: none !important;
+        }
+        /* Modal Transitions */
+        .modal-container {
+            transition: opacity 0.3s ease;
+        }
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            -webkit-appearance: none;
+            width: 8px;
+        }
+        ::-webkit-scrollbar:vertical {
+            display: block;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(30, 41, 59, 0.5);
+            -webkit-appearance: none;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+            -webkit-appearance: none;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+        @media (max-width: 768px) {
+            ::-webkit-scrollbar {
+                -webkit-appearance: none;
+                width: 14px; /* Make it significantly wider on mobile */
+            }
+            ::-webkit-scrollbar:vertical {
+                display: block;
+            }
+            ::-webkit-scrollbar-track {
+                background: rgba(30, 41, 59, 0.8); /* Make track slightly darker on mobile to be clearly visible */
+            }
+            ::-webkit-scrollbar-thumb {
+                background: #94a3b8; /* Lighter color on mobile to stand out */
+                border-radius: 7px;
+                border: 2px solid rgba(30, 41, 59, 1); /* Add a border to give a pill effect and slightly separate from edge */
+                -webkit-appearance: none;
+            }
+        }
+        
+        /* Force scrollbars to always show on specific lists by using overflow-y: scroll */
+        /* But we will apply it directly via JS or CSS classes where needed. */
+
+        /* Toggle Switch */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #10b981;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #10b981;
+        }
+        .toggle-checkbox.pink:checked {
+            border-color: #ec4899;
+        }
+        .toggle-checkbox.pink:checked + .toggle-label {
+            background-color: #ec4899;
+        }
+        /* Checkbox custom */
+        .custom-checkbox:checked {
+            background-color: #ec4899;
+            border-color: #ec4899;
+        }
+        /* Fraction formatting */
+        .fraction {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            vertical-align: middle;
+            margin: 0 4px;
+            font-size: 0.9em;
+        }
+        .fraction > span:first-child {
+            border-bottom: 2px solid white;
+            padding: 0 4px;
+            line-height: 1.2;
+        }
+        .fraction > span:last-child {
+            padding: 0 4px;
+            line-height: 1.2;
+        }
+        
+        /* Background grid */
+        .bg-grid {
+            background-size: 40px 40px;
+            background-image: linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+        }
+        
+        /* Glassmorphism */
+        .glass {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transform: translateZ(0); /* Force GPU Acceleration */
+            -webkit-transform: translateZ(0);
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            will-change: transform, backdrop-filter;
+        }
+        
+        /* Drop zone */
+        .drop-zone.dragover {
+            background-color: rgba(79, 70, 229, 0.2);
+            border: 2px dashed #4f46e5;
+        }
+    
+        /* Arcade specific styles */
+        .font-arcade { font-family: 'Press Start 2P', cursive; }
+        .arcade-title {
+            font-family: 'Press Start 2P', cursive;
+            text-shadow: 4px 4px 0 #ff00ff, -4px -4px 0 #00f3ff;
+            color: white;
+            letter-spacing: 2px;
+            line-height: 1.5;
+        }
+        .arcade-btn {
+            font-family: 'Press Start 2P', cursive;
+            text-transform: uppercase;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+            transition: all 0.2s ease;
+            border-radius: 0.75rem !important;
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .arcade-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 0 0 0 transparent;
+        }
+        .arcade-btn-primary { border-color: rgba(0, 243, 255, 0.4); color: #00f3ff; }
+        .arcade-btn-primary:hover { background: rgba(0, 243, 255, 0.1); border-color: #00f3ff; }
+        
+        .arcade-btn-secondary { border-color: rgba(255, 0, 255, 0.4); color: #ff00ff; }
+        .arcade-btn-secondary:hover { background: rgba(255, 0, 255, 0.1); border-color: #ff00ff; }
+        
+        .arcade-btn-accent { border-color: rgba(57, 255, 20, 0.4); color: #39ff14; }
+        .arcade-btn-accent:hover { background: rgba(57, 255, 20, 0.1); border-color: #39ff14; }
+        
+        .arcade-btn-danger { border-color: rgba(255, 0, 60, 0.4); color: #ff003c; }
+        .arcade-btn-danger:hover { background: rgba(255, 0, 60, 0.1); border-color: #ff003c; }
+
+        .arcade-input {
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.3);
+            color: #00f3ff;
+            font-family: 'Press Start 2P', cursive;
+            border-radius: 1rem !important;
+            text-shadow: none;
+            transition: all 0.2s;
+        }
+        .arcade-input:focus {
+            border-color: #00f3ff;
+            outline: none;
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
+        }
+        /* Refined Modern UI */
+        .bg-grid {
+            background-size: 40px 40px;
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px) !important;
+        }
+        .glass {
+            background: rgba(15, 23, 42, 0.8) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            backdrop-filter: blur(12px) !important;
+            -webkit-backdrop-filter: blur(12px) !important;
+            border-radius: 1rem !important;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3) !important;
+            transform: translateZ(0) !important; /* Force GPU Acceleration */
+            -webkit-transform: translateZ(0) !important;
+            backface-visibility: hidden !important;
+            -webkit-backface-visibility: hidden !important;
+            will-change: transform, backdrop-filter !important;
+        }
+        .glass.border-red-500\/30 {
+            border-color: rgba(239, 68, 68, 0.3) !important;
+            box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.1) !important;
+        }
+        .text-bomb { color: #ff003c !important; }
+        .word-font {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, Arial, sans-serif !important;
+            letter-spacing: normal !important;
+            text-transform: none !important;
+        }
+
+        /* ===== Flip Card (Source Card) ===== */
+        .flip-card { perspective: 800px; cursor: pointer; }
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.5s cubic-bezier(0.4,0,0.2,1);
+            transform-style: preserve-3d;
+        }
+        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+        .flip-card-front, .flip-card-back {
+            position: absolute; inset: 0;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            border-radius: 0.75rem;
+            display: flex; align-items: center; justify-content: center;
+            padding: 0.5rem 1rem;
+        }
+        .flip-card-back { transform: rotateY(180deg); }
+
+        /* ===== Answered-correct list ===== */
+        #correct-answers-list { list-style: none; padding: 0; }
+        #correct-answers-list li {
+            animation: fadeInUp 0.3s ease both;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ===== Mobile Optimisations ===== */
+        @media (max-width: 640px) {
+            .arcade-btn { font-size: 0.65rem !important; padding: 0.75rem 0.5rem !important; }
+            #question-text { font-size: 1.25rem !important; min-height: 80px !important; }
+            #answer-input  { font-size: 1rem !important; min-height: 70px !important; padding: 1rem !important; }
+            #btn-submit, #btn-skip, #btn-reveal, #btn-next { font-size: 0.6rem !important; }
+            #btn-review-back { padding: 0.5rem; }
+            .game-action-row { flex-wrap: wrap; gap: 0.5rem !important; }
+            .game-action-row > button { flex: 1 1 40% !important; min-width: 0; }
+        }
+    
+        [contenteditable="true"]:empty:before {
+            content: attr(placeholder);
+            color: rgba(255, 255, 255, 0.4);
+            pointer-events: none;
+            display: block;
+        }
+        
+        /* Clean pasted styles from external sources */
+        .clean-text *:not(.fraction):not(.fraction *):not(sup):not(sub) {
+            font-family: inherit !important;
+            font-size: inherit !important;
+            color: inherit !important;
+            background-color: transparent !important;
+            line-height: inherit !important;
+        }
+        sup {
+            font-size: 0.6em !important;
+            line-height: 1 !important;
+            position: relative !important;
+            top: -0.5em !important;
+        }
+        sub {
+            font-size: 0.6em !important;
+            line-height: 1 !important;
+            position: relative !important;
+            bottom: -0.25em !important;
+        }
+        .format-btn {
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #9ca3af;
+            transition: all 0.2s;
+        }
+        .format-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        .format-btn.active {
+            background-color: rgba(236, 72, 153, 0.2); /* Pink tint */
+            border-color: rgba(236, 72, 153, 0.5);
+            color: #f472b6;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+</head>
+<body class="relative min-h-screen text-white bg-grid">
+
+    <!-- Background Blobs (Optimized with GPU acceleration) -->
+    <div class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none transform-gpu">
+        <div class="absolute top-0 left-1/4 w-96 h-96 bg-primary/20 rounded-full filter blur-3xl opacity-10 transform-gpu will-change-transform"></div>
+        <div class="absolute top-1/4 right-1/4 w-96 h-96 bg-secondary/20 rounded-full filter blur-3xl opacity-10 transform-gpu will-change-transform"></div>
+        <div class="absolute bottom-0 left-1/3 w-96 h-96 bg-accent/20 rounded-full filter blur-3xl opacity-10 transform-gpu will-change-transform"></div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 bg-bgDark z-50 flex flex-col items-center justify-center transition-opacity duration-500">
+        <div class="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <div class="mt-4 text-xl font-bold tracking-widest text-primary animate-pulse">SYSTEM INITIALIZING...</div>
+    </div>
+
+    <div id="app-container" class="relative z-10 container mx-auto px-4 py-8 max-w-5xl">
+        
+        <!-- Header -->
+        <header class="flex flex-col md:flex-row justify-between items-center mb-8 glass rounded-2xl p-6 shadow-2xl border-t border-white/10">
+            <div>
+                <h1 class="text-3xl md:text-4xl arcade-title mb-2">DAIRY PUZZLE</h1>
+                <p class="text-primary font-arcade text-xs mt-2">Credit by Sirasit Ragtong</p>
+            </div>
+            <div id="auth-section" class="mt-4 md:mt-0 flex flex-col items-end">
+                <div id="auth-status-container" class="flex items-center space-x-3">
+                    <span id="local-mode-badge" class="hidden px-3 py-1 bg-yellow-500/20 text-yellow-400 text-xs rounded-full font-bold uppercase tracking-wide border border-yellow-500/50">LOCAL MODE ACTIVE</span>
+                    <span id="user-email" class="text-sm font-medium cursor-pointer hover:text-primary transition-colors text-gray-300"></span>
+                    <button id="btn-login-google" class="hidden px-4 py-2 bg-white text-gray-900 rounded-lg font-bold text-sm hover:bg-gray-200 transition-colors shadow-lg flex items-center space-x-2">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="currentColor" d="M21.35,11.1H12.18V13.83H18.69C18.36,17.64 15.19,19.27 12.19,19.27C8.36,19.27 5,16.25 5,12C5,7.9 8.2,4.73 12.2,4.73C15.29,4.73 17.1,6.7 17.1,6.7L19,4.72C19,4.72 16.56,2 12.1,2C6.42,2 2.03,6.8 2.03,12C2.03,17.05 6.16,22 12.25,22C17.6,22 21.5,18.33 21.5,12.91C21.5,11.76 21.35,11.1 21.35,11.1V11.1Z"/></svg>
+                        <span>Login</span>
+                    </button>
+                    <button id="btn-logout" class="hidden px-3 py-1.5 bg-red-500/20 text-red-400 rounded-lg text-xs hover:bg-red-500/30 transition-colors border border-red-500/30">Logout</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- ==================== SETUP SCREEN ==================== -->
+        <main id="setup-screen" class="space-y-8 animate-fade-in">
+            
+            <!-- Global Search -->
+            <div class="relative max-w-2xl mx-auto flex gap-3 items-center">
+                <div class="relative flex-shrink-0">
+                    <button id="streak-btn" onclick="showStreakMap()" class="bg-surface/80 border border-orange-500/30 rounded-2xl px-5 py-4 text-orange-400 font-bold shadow-xl flex items-center justify-center gap-2 hover:bg-orange-500/10 hover:border-orange-500/50 transition-all group relative">
+                        <span id="streak-icon" class="text-2xl group-hover:scale-110 transition-all drop-shadow-[0_0_5px_rgba(249,115,22,0.5)]">🔥</span> 
+                        <span id="streak-count" class="text-xl font-mono">0</span>
+                    </button>
+                    <!-- Warning Tooltip -->
+                    <div id="streak-warning" class="absolute -top-3 -right-3 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-lg border border-white/20 animate-bounce pointer-events-none hidden z-10 word-font">
+                        ยังไม่ได้เล่น!
+                    </div>
+                </div>
+                <div class="relative flex-1">
+                    <input type="text" id="global-search-input" placeholder="ค้นหาโฟลเดอร์หรือหมวดหมู่..." class="w-full bg-surface/80 border border-white/20 rounded-2xl py-4 px-6 text-lg focus:outline-none focus:ring-2 focus:ring-primary shadow-xl transition-all">
+                    <div class="absolute right-4 top-4 text-gray-400">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </div>
+                    <div id="global-search-results" class="absolute w-full mt-2 bg-surface border border-white/10 rounded-xl shadow-2xl max-h-64 overflow-y-auto z-50 hidden"></div>
+                </div>
+            </div>
+
+            <!-- Settings Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <!-- Time Setting -->
+                <div class="glass p-6 rounded-2xl flex items-center justify-between">
+                    <div>
+                        <h3 class="font-bold text-lg">เวลาต่อข้อ (วิ)</h3>
+                        <p class="text-sm text-gray-400">ปิดเพื่อจับเวลา</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+                            <input type="checkbox" name="toggle" id="toggle-no-time" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-transform duration-300 z-10"/>
+                            <label for="toggle-no-time" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-600 cursor-pointer transition-colors duration-300"></label>
+                        </div>
+                        <input type="number" id="setting-time" value="15" min="5" max="120" class="w-20 bg-bgDark border border-white/20 rounded-lg px-3 py-2 text-center focus:outline-none focus:border-primary">
+                    </div>
+                </div>
+
+                <!-- Count Setting -->
+                <div class="glass p-6 rounded-2xl flex items-center justify-between">
+                    <div>
+                        <h3 class="font-bold text-lg">จำนวนข้อ</h3>
+                        <p class="text-sm text-gray-400">ปิดเพื่อเล่นตามจำนวน</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+                            <input type="checkbox" name="toggle" id="toggle-all-questions" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-transform duration-300 z-10"/>
+                            <label for="toggle-all-questions" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-600 cursor-pointer transition-colors duration-300"></label>
+                        </div>
+                        <input type="number" id="setting-count" value="5" min="1" class="w-20 bg-bgDark border border-white/20 rounded-lg px-3 py-2 text-center focus:outline-none focus:border-primary">
+                    </div>
+                </div>
+
+                <!-- Mode Setting -->
+                <div class="glass p-6 rounded-2xl flex items-center justify-between">
+                    <div>
+                        <h3 class="font-bold text-lg">โหมดตรวจสอบ</h3>
+                        <p class="text-sm text-gray-400">อัตโนมัติ / ทำเอง</p>
+                    </div>
+                    <select id="setting-mode" class="bg-bgDark border border-white/20 rounded-lg px-4 py-2 focus:outline-none focus:border-primary font-bold">
+                        <option value="AUTO">AUTO (ข้ามอัตโนมัติ)</option>
+                        <option value="MANUAL">MANUAL (ทบทวน)</option>
+                    </select>
+                </div>
+
+                <!-- Other Toggles -->
+                <div class="glass p-6 rounded-2xl flex flex-col justify-center space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-bold text-lg">สลับโจทย์/คำตอบ (50%)</h3>
+                        <div class="relative inline-block w-12 align-middle select-none transition duration-200 ease-in">
+                            <input type="checkbox" id="toggle-swap" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-transform duration-300 z-10"/>
+                            <label for="toggle-swap" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-600 cursor-pointer transition-colors duration-300"></label>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between border-t border-white/10 pt-4">
+                        <div>
+                            <h3 class="font-bold text-lg text-secondary">QUESTION FILTER</h3>
+                            <p class="text-[10px] sm:text-xs text-gray-400 mt-1">
+                                ปิด: <span class="text-gray-300">เล่นทุกข้อ (ดึงคำถามทั้งหมดในโฟลเดอร์)</span><br>
+                                เปิด: <span class="text-accent">เล่นเฉพาะข้อที่ "ติ๊กถูก" ในหน้าเพิ่มข้อสอบ</span> <svg class="w-3 h-3 inline-block text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                            </p>
+                        </div>
+                        <div class="relative inline-block w-12 align-middle select-none transition duration-200 ease-in">
+                            <input type="checkbox" id="toggle-filter" class="toggle-checkbox pink absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-transform duration-300 z-10"/>
+                            <label for="toggle-filter" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-600 cursor-pointer transition-colors duration-300"></label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-col md:flex-row justify-center items-center gap-4 py-4">
+                <button id="btn-import" class="w-full md:w-auto px-8 py-4 arcade-btn arcade-btn-accent">
+                    <span class="flex items-center justify-center"><svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg> IMPORT</span>
+                </button>
+                <input type="file" id="file-import" accept=".json" class="hidden">
+
+                <button id="btn-database" class="w-full md:w-64 px-8 py-5 arcade-btn arcade-btn-primary text-xl">
+                    <span class="flex items-center justify-center"><svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg> DATABASE</span>
+                </button>
+
+                <button id="btn-export" class="w-full md:w-auto px-8 py-4 arcade-btn arcade-btn-secondary">
+                    <span class="flex items-center justify-center"><svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> EXPORT</span>
+                </button>
+            </div>
+
+            <!-- Start Button -->
+            <div class="flex justify-center mt-8">
+                <button id="btn-start-game" class="w-full md:w-96 px-8 py-6 arcade-btn arcade-btn-secondary text-2xl animate-pulse">
+                    INITIALIZE MISSION
+                </button>
+            </div>
+
+            <!-- Pause History (Only visible when paused) -->
+            <!-- Pause History (Only visible when paused) -->
+            <div id="pause-history-section" class="hidden w-full max-w-4xl mx-auto mt-8 glass rounded-3xl p-6 border border-white/10">
+                <h3 class="text-xl font-bold mb-4 flex items-center text-gray-300"><span class="text-secondary mr-2">📋</span> BATTLE LOG</h3>
+                <div id="pause-history-list" class="space-y-3 max-h-[30vh] overflow-y-auto pr-2">
+                    <!-- History populated here -->
+                </div>
+            </div>
+        </main>
+
+        <!-- ==================== GAME SCREEN ==================== -->
+        <main id="game-screen" class="hidden-screen flex-col h-full min-h-[70vh] relative px-2 sm:px-0">
+            
+            <!-- Game Header -->
+            <div class="flex justify-between items-center mb-6">
+                <button id="btn-pause" class="p-3 bg-surface hover:bg-gray-700 rounded-xl transition-colors border border-white/10">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                </button>
+                <div class="glass px-6 py-2 rounded-full font-bold text-xl tracking-widest border border-primary/30 text-primary">
+                    MISSION <span id="game-current-q">1</span> / <span id="game-total-q">10</span>
+                </div>
+                <div class="flex gap-1">
+                    <button id="btn-review-back" class="hidden p-3 bg-surface hover:bg-gray-700 rounded-xl transition-colors border border-white/10" title="ย้อนดูข้อที่ตอบถูก">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    </button>
+                    <button id="btn-review-forward" class="hidden p-3 bg-surface hover:bg-gray-700 rounded-xl transition-colors border border-white/10" title="ย้อนกลับไปข้อปัจจุบัน">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Timer Area -->
+            <div id="timer-container" class="mb-8 hidden">
+                <div class="flex justify-between items-end mb-2">
+                    <div id="dynamite-icon" class="text-3xl transition-transform origin-bottom">🧨</div>
+                    <div id="time-display" class="font-mono text-3xl font-bold text-bomb">15.00</div>
+                </div>
+                <div class="h-4 bg-surface rounded-full overflow-hidden border border-white/10 relative">
+                    <div id="fuse-wire" class="absolute top-0 right-0 h-full bg-gradient-to-l from-yellow-400 via-orange-500 to-red-500 transition-all duration-100 ease-linear" style="width: 100%;">
+                        <div class="absolute left-0 top-1/2 -translate-y-1/2 -ml-2 w-4 h-4 bg-yellow-200 rounded-full animate-ping"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question Area -->
+            <div class="flex-grow flex flex-col items-center justify-center mb-4 relative">
+
+                <!-- Source Flip Card -->
+                <div class="w-full max-w-5xl mb-3">
+                    <div id="source-flip-card" class="flip-card w-full" style="height:48px;" onclick="window.flipSourceCard()" title="กดเพื่อดูที่มาของข้อสอบ">
+                        <div class="flip-card-inner">
+                            <div class="flip-card-front bg-white/5 border border-white/10 text-gray-400 text-xs font-medium tracking-wider select-none transition-colors hover:bg-white/10">
+                                กดเพื่อดูที่มาของข้อสอบ
+                            </div>
+                            <div class="flip-card-back bg-primary/10 border border-primary/20">
+                                <div class="flex flex-col items-center justify-center gap-1 text-center w-full px-2 h-full">
+                                    <span id="source-cat"  class="text-gray-400 text-[10px] font-bold tracking-widest uppercase truncate w-full text-center">—</span>
+                                    <span id="source-folder" class="text-gray-200 text-sm font-semibold truncate w-full text-center">—</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Correct Answers So Far (multi-answer) -->
+                <ul id="correct-answers-list" class="flex flex-wrap justify-center gap-3 mb-4 w-full max-w-5xl min-h-[28px]"></ul>
+
+                <!-- Answer Badges (remaining dots) -->
+                <div id="answer-badges" class="flex flex-wrap justify-center gap-3 mb-5 min-h-[28px]"></div>
+                
+                <!-- Main Question Text -->
+                <div class="glass w-full max-w-5xl p-5 sm:p-8 rounded-3xl text-center shadow-2xl border border-white/10 relative overflow-hidden">
+                    <div class="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none"></div>
+                    <div id="question-text" class="text-xl sm:text-2xl md:text-4xl word-font font-bold leading-relaxed break-words whitespace-pre-wrap text-center text-white clean-text" style="min-height: 90px; display: flex; align-items: center; justify-content: center;">
+                        <!-- Question content -->
+                    </div>
+                    <div id="question-image-container" class="hidden relative mt-4 mx-auto max-w-full max-h-64 inline-block group cursor-pointer" onclick="window.openZoomModal(document.getElementById('question-image').src);">
+                        <img id="question-image" class="max-w-full max-h-64 rounded-lg border border-white/20 shadow-lg object-contain">
+                        <div class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-lg">
+                            <svg class="w-12 h-12 text-white drop-shadow-md" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path></svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="max-w-5xl w-full mx-auto relative z-10">
+                
+                <div class="flex justify-center gap-2 mb-2">
+                    <button class="format-btn format-sup px-3 py-1 rounded text-sm font-bold" onmousedown="event.preventDefault(); toggleFormatMode('superscript');" title="Superscript">X²</button>
+                    <button class="format-btn format-sub px-3 py-1 rounded text-sm font-bold" onmousedown="event.preventDefault(); toggleFormatMode('subscript');" title="Subscript">X₂</button>
+                </div>
+                <div id="answer-input" contenteditable="true" class="w-full p-4 sm:p-6 text-lg sm:text-xl md:text-2xl text-center arcade-input word-font clean-text" placeholder="TYPE ANSWER..." spellcheck="false" style="min-height: 80px;"></div>
+                
+                <!-- Fraction Preview -->
+                <div id="fraction-preview" class="text-center h-7 mt-2 text-gray-400 text-base font-serif"></div>
+                <!-- Action Buttons -->
+                <div class="game-action-row flex flex-row justify-center gap-2 sm:gap-4 mt-4">
+                    <button id="btn-submit" class="flex-1 py-3 sm:py-4 arcade-btn arcade-btn-primary text-sm sm:text-xl md:text-2xl">SUBMIT [Enter]</button>
+                    <button id="btn-skip" class="flex-1 py-3 sm:py-4 arcade-btn arcade-btn-secondary text-sm sm:text-xl md:text-2xl">SKIP</button>
+                    <button id="btn-reveal" class="flex-1 py-3 sm:py-4 arcade-btn arcade-btn-danger text-sm sm:text-xl md:text-2xl">REVEAL</button>
+                    <button id="btn-next" class="hidden flex-1 py-3 sm:py-4 arcade-btn arcade-btn-accent text-sm sm:text-xl md:text-2xl">NEXT</button>
+                    <button id="btn-manual-correct" class="hidden flex-1 py-3 sm:py-4 arcade-btn bg-emerald-500 hover:bg-emerald-400 text-white border-b-4 border-emerald-700 active:border-b-0 active:translate-y-1 text-sm sm:text-xl md:text-2xl font-black rounded-xl">ถูกต้อง</button>
+                    <button id="btn-manual-incorrect" class="hidden flex-1 py-3 sm:py-4 arcade-btn bg-red-500 hover:bg-red-400 text-white border-b-4 border-red-700 active:border-b-0 active:translate-y-1 text-sm sm:text-xl md:text-2xl font-black rounded-xl">ไม่ถูกต้อง</button>
+                </div>
+            </div>
+
+            <!-- Correct Answer Reveal Area (Hidden) -->
+            <div id="reveal-area" class="hidden mt-8 glass p-6 rounded-2xl border border-red-500/30 bg-red-900/20 text-center mx-auto max-w-2xl w-full">
+                <h4 class="text-red-400 font-bold mb-2 tracking-widest text-sm">CORRECT DATA</h4>
+                <div id="reveal-answers" class="text-2xl font-bold text-white flex flex-col gap-2"></div>
+            </div>
+
+            <!-- Bomb Animation Container -->
+            <div id="bomb-anim-container" class="fixed inset-0 pointer-events-none flex items-center justify-center z-50">
+                <div id="bomb-explosion" class="hidden text-9xl">💥</div>
+                <div id="bomb-defuse" class="hidden text-9xl text-emerald-400">✓</div>
+            </div>
+
+            <!-- Pause Modal -->
+            <div id="pause-modal" class="modal-container fixed inset-0 w-screen h-screen z-[60] bg-black/40 backdrop-blur-md transform-gpu flex items-center justify-center opacity-0 pointer-events-none transition-all duration-300">
+                <div class="glass p-10 rounded-3xl text-center max-w-md w-full border border-white/20 transform scale-95 transition-transform duration-300">
+                    <h2 class="text-4xl font-black mb-8 tracking-widest text-primary animate-pulse">PAUSED</h2>
+                    <div class="flex flex-col gap-4">
+                        <button id="btn-resume" class="py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-lg transition-colors">กลับสู่ภารกิจ</button>
+                        <button id="btn-quit" class="py-4 bg-red-600/80 hover:bg-red-500 text-white font-bold rounded-xl text-lg transition-colors border border-red-500/50">ออกและกลับเมนูหลัก</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- ==================== SUMMARY SCREEN ==================== -->
+        <main id="summary-screen" class="hidden-screen flex-col items-center justify-center py-10 animate-fade-in w-full">
+            <h2 class="text-2xl sm:text-3xl md:text-5xl arcade-title mb-6 md:mb-8 text-center" style="text-shadow: 2px 2px 0 rgba(57, 255, 20, 0.4), -2px -2px 0 rgba(0, 243, 255, 0.4);">MISSION ACCOMPLISHED</h2>
+            
+            <div class="flex flex-col sm:flex-row gap-4 sm:gap-8 mb-8 md:mb-10 w-full px-8 sm:w-auto justify-center">
+                <div id="score-container" class="glass w-full sm:w-40 h-32 sm:h-40 rounded-2xl sm:rounded-full flex flex-col items-center justify-center shadow-2xl border border-white/10 relative overflow-hidden group">
+                    <div class="absolute inset-0 bg-primary/20 group-hover:bg-primary/30 transition-colors"></div>
+                    <span class="text-4xl sm:text-5xl font-black z-10" id="summary-score">0</span>
+                    <span class="text-[10px] sm:text-xs text-gray-300 font-bold tracking-widest z-10 mt-1">SCORE</span>
+                </div>
+                <div class="glass w-full sm:w-40 h-32 sm:h-40 rounded-2xl sm:rounded-full flex flex-col items-center justify-center shadow-2xl border border-white/10 relative overflow-hidden group">
+                    <div class="absolute inset-0 bg-secondary/20 group-hover:bg-secondary/30 transition-colors"></div>
+                    <span class="text-3xl sm:text-4xl font-black z-10 font-mono" id="summary-time">0s</span>
+                    <span class="text-[10px] sm:text-xs text-gray-300 font-bold tracking-widest z-10 mt-1">TIME</span>
+                </div>
+                <div class="glass w-full sm:w-40 h-32 sm:h-40 rounded-2xl sm:rounded-full flex flex-col items-center justify-center shadow-2xl border border-red-500/30 relative overflow-hidden group">
+                    <div class="absolute inset-0 bg-red-500/10 group-hover:bg-red-500/20 transition-colors"></div>
+                    <span class="text-4xl sm:text-5xl font-black z-10 text-red-400" id="summary-wrong">0</span>
+                    <span class="text-[10px] sm:text-xs text-red-300 font-bold tracking-widest z-10 mt-1">WRONG</span>
+                </div>
+            </div>
+
+            <div class="w-full max-w-4xl glass rounded-3xl p-8 mb-10 border border-white/10">
+                <h3 class="text-2xl font-bold mb-6 flex items-center"><span class="text-red-400 mr-2">⚠️</span> ANALYSIS REPORT</h3>
+                <div id="wrong-answers-list" class="space-y-4 max-h-[40vh] overflow-y-auto pr-2">
+                    <!-- Wrong answers populated here -->
+                </div>
+                <div id="perfect-score-msg" class="hidden text-center py-8">
+                    <div class="text-6xl mb-4">🏆</div>
+                    <h4 class="text-2xl font-bold text-emerald-400">PERFECT! ไม่มีข้อที่ตอบผิดเลย</h4>
+                </div>
+            </div>
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <!-- ==================== MODALS ==================== -->
+    <div id="modals-container">
+        
+        <!-- Database Modal -->
+        <div id="database-modal" class="modal-container fixed inset-0 z-50 bg-bgDark/90 flex items-center justify-center opacity-0 pointer-events-none p-4">
+            <div class="bg-surface w-full max-w-6xl h-[90vh] rounded-3xl shadow-2xl border border-white/10 flex flex-col overflow-hidden transform scale-95 transition-transform duration-300 relative">
+                
+                <!-- Header -->
+                <div class="p-4 md:p-6 border-b border-white/10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-black/20">
+                    <div class="flex flex-col w-full sm:w-auto">
+                        <div class="flex justify-between items-center w-full">
+                            <h2 class="text-xl md:text-2xl font-black flex items-center"><svg class="w-6 h-6 md:w-7 md:h-7 mr-2 md:mr-3 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg> DATABASE</h2>
+                            <button class="btn-close-modal p-2 hover:bg-white/10 rounded-full transition-colors sm:hidden" data-target="database-modal">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>
+                        </div>
+                        <p class="text-[10px] sm:text-xs text-primary mt-1 opacity-80">* ติ๊กถูก ✔️ ที่โฟลเดอร์เพื่อส่งไปเล่นในเกม</p>
+                    </div>
+                    <div class="flex gap-2 w-full sm:w-auto">
+                        <button id="btn-new-folder" class="flex-1 sm:flex-none justify-center px-2 md:px-4 py-2 bg-primary hover:bg-indigo-500 rounded-lg font-bold text-xs md:text-sm flex items-center transition-colors"><span class="mr-1">+</span> NEW FOLDER</button>
+                        <button id="btn-new-cat" class="flex-1 sm:flex-none justify-center px-2 md:px-4 py-2 bg-secondary hover:bg-pink-500 rounded-lg font-bold text-xs md:text-sm flex items-center transition-colors"><span class="mr-1">+</span> NEW CAT</button>
+                        <button class="btn-close-modal p-2 hover:bg-white/10 rounded-full transition-colors hidden sm:block" data-target="database-modal">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Body (2 columns) -->
+                <div class="flex-1 flex overflow-hidden flex-col md:flex-row">
+                    <!-- Left: Uncategorized -->
+                    <div class="w-full md:w-1/3 border-r border-white/10 p-6 flex flex-col bg-black/10">
+                        <h3 class="font-bold text-gray-400 mb-4 tracking-wider text-sm flex items-center justify-between">
+                            <span>UNCATEGORIZED FOLDERS</span>
+                            <span class="text-xs bg-white/10 px-2 py-1 rounded" id="uncat-count">0</span>
+                        </h3>
+                        <div id="uncategorized-list" class="flex-1 overflow-y-scroll space-y-3 pr-2 drop-zone min-h-[100px]">
+                            <!-- Folders go here -->
+                        </div>
+                    </div>
+                    <!-- Right: Categories -->
+                    <div class="w-full md:w-2/3 p-6 flex flex-col bg-surface overflow-hidden">
+                        <h3 class="font-bold text-gray-400 mb-4 tracking-wider text-sm">CATEGORIES</h3>
+                        <div id="categories-list" class="flex-1 overflow-y-scroll space-y-6 pr-2">
+                            <!-- Categories go here -->
+                        </div>
+                    </div>
+                </div>
+                
+
+            </div>
+        </div>
+
+        <!-- Streak Modals -->
+        <div id="streak-map-modal" class="modal-container fixed inset-0 z-[60] bg-bgDark/95 flex items-center justify-center opacity-0 pointer-events-none p-4">
+            <div class="bg-surface border border-white/10 rounded-3xl shadow-2xl p-6 w-full max-w-sm transform transition-all duration-300 relative text-center overflow-hidden">
+                <button data-target="streak-map-modal" class="btn-close-modal absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+                <div class="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-orange-500/20 to-transparent pointer-events-none"></div>
+                <div class="text-6xl mb-4 mt-8 drop-shadow-[0_0_15px_rgba(249,115,22,0.5)]">🔥</div>
+                <h3 class="text-2xl font-bold text-white mb-2 word-font">การเดินทางของคุณ</h3>
+                <p class="text-gray-300 mb-6 text-sm">เข้าเล่นเกมต่อเนื่องเพื่อสะสมสถิติ!</p>
+                <div class="bg-bgDark/50 rounded-2xl p-6 border border-white/5 relative">
+                    <div class="text-sm text-gray-400 mb-1">สถิติปัจจุบัน</div>
+                    <div class="text-4xl font-bold text-orange-400 font-mono" id="streak-map-current">0</div>
+                    <div class="text-sm font-bold text-gray-500 mt-1">วันต่อเนื่อง</div>
+                    <div class="mt-4 pt-4 border-t border-white/10 flex justify-between text-xs">
+                        <span class="text-gray-400">สถิติสูงสุด:</span>
+                        <span class="text-white font-bold" id="streak-map-max">0 วัน</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="streak-celebration-modal" class="modal-container fixed inset-0 z-[70] bg-bgDark/95 flex items-center justify-center opacity-0 pointer-events-none p-4">
+            <div class="bg-surface border border-orange-500/30 rounded-3xl shadow-[0_0_50px_rgba(249,115,22,0.2)] p-8 w-full max-w-sm transform transition-all duration-500 relative text-center">
+                <button data-target="streak-celebration-modal" class="btn-close-modal absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+                <div class="text-8xl mb-6 animate-bounce drop-shadow-[0_0_30px_rgba(249,115,22,0.8)]">🔥</div>
+                <h3 class="text-3xl font-bold text-white mb-2 word-font">ยอดเยี่ยมมาก!</h3>
+                <p class="text-orange-200 mb-6 text-lg">คุณทำสถิติเล่นต่อเนื่องได้</p>
+                <div class="text-6xl font-bold text-orange-400 font-mono mb-2 drop-shadow-[0_0_15px_rgba(249,115,22,0.5)]"><span id="celeb-streak-count">0</span></div>
+                <p class="text-orange-200 text-lg mb-8">วันแล้ว!</p>
+                <button class="btn-close-modal w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-bold text-lg hover:from-orange-400 hover:to-red-400 transition-all shadow-lg shadow-orange-500/20" data-target="streak-celebration-modal">ทำต่อไป!</button>
+            </div>
+        </div>
+
+        <!-- Question Editor Modal -->
+        <div id="editor-modal" class="modal-container fixed inset-0 z-[55] bg-bgDark/95 flex items-center justify-center opacity-0 pointer-events-none p-4">
+            <div class="bg-surface w-full max-w-5xl h-[90vh] rounded-3xl shadow-2xl border border-white/10 flex flex-col overflow-hidden transform scale-95 transition-transform duration-300">
+                
+                <!-- Header -->
+                <div class="p-4 md:p-6 border-b border-white/10 flex flex-col md:flex-row gap-4 justify-between md:items-center bg-black/20">
+                    <div class="flex items-center gap-2 md:gap-3">
+                        <button id="btn-back-to-db" onclick="window.backToDb()" class="p-1.5 md:p-2 hover:bg-white/10 rounded-full transition-colors mr-1 md:mr-2">
+                            <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                        </button>
+                        <h2 class="text-lg md:text-2xl font-black text-primary truncate max-w-[200px] sm:max-w-[400px]" id="editor-folder-name">Folder Name</h2>
+                        <button id="btn-rename-folder" class="p-1.5 hover:bg-white/10 rounded transition-colors text-gray-400 hover:text-white" title="Rename Folder"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button>
+                    </div>
+                    <div class="flex flex-wrap gap-3 items-center justify-between md:justify-end">
+                        <span class="text-xs md:text-sm text-gray-400 font-mono bg-black/30 px-2 py-1 md:px-3 md:py-1 rounded-lg">ID: <span id="editor-folder-id"></span></span>
+                        <div class="flex items-center gap-1 md:gap-2">
+                            <button id="btn-delete-folder" class="p-1.5 md:p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors border border-transparent hover:border-red-500/30" title="Delete Folder">
+                                <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                            <button onclick="window.closeEditor()" class="p-1.5 md:p-2 hover:bg-white/10 rounded-full transition-colors">
+                                <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex-1 flex flex-col md:flex-row overflow-hidden">
+                    <!-- Form Area -->
+                    <div class="w-full md:w-1/3 border-r border-white/10 p-6 bg-black/20 overflow-y-auto">
+                        <h3 class="font-bold mb-4 flex items-center justify-between" id="editor-form-title">
+                            <span class="text-secondary">ADD DATA</span>
+                            <button id="btn-cancel-edit" class="hidden text-xs text-gray-400 hover:text-white underline">Cancel Edit</button>
+                        </h3>
+                        <div class="space-y-4">
+                            <div>
+                                <div class="flex items-center justify-between mb-1">
+                                    <label class="block text-xs font-bold text-gray-400">QUESTION</label>
+                                    <div class="flex gap-1">
+                                        <button class="format-btn format-sup px-2 py-0.5 rounded text-xs font-bold" onmousedown="event.preventDefault(); toggleFormatMode('superscript');" title="Superscript">X²</button>
+                                        <button class="format-btn format-sub px-2 py-0.5 rounded text-xs font-bold" onmousedown="event.preventDefault(); toggleFormatMode('subscript');" title="Subscript">X₂</button>
+                                    </div>
+                                </div>
+                                <div id="edit-q" contenteditable="true" class="w-full bg-surface border border-white/20 rounded-lg p-3 text-sm focus:outline-none focus:border-secondary word-font clean-text" placeholder="Enter question..." style="min-height: 80px;"></div>
+                            </div>
+                            <!-- Image Upload -->
+                            <div class="mt-2">
+                                <label class="block text-xs font-bold text-gray-400 mb-1">IMAGE (OPTIONAL)</label>
+                                <div class="flex items-center gap-2">
+                                    <label class="cursor-pointer bg-white/5 hover:bg-white/10 border border-dashed border-white/20 px-3 py-2 rounded-lg text-xs text-gray-300 transition-colors flex items-center">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                        เพิ่มรูปภาพ
+                                        <input type="file" id="edit-img-input" accept="image/jpeg, image/png, image/webp" class="hidden">
+                                    </label>
+                                    <div id="edit-img-preview-container" class="hidden relative">
+                                        <img id="edit-img-preview" class="h-10 w-10 object-cover rounded border border-white/20 cursor-pointer hover:opacity-80 transition-opacity" onclick="window.openZoomModal(this.src)">
+                                        <button id="btn-remove-img" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] hover:bg-red-600">X</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="answers-container" class="space-y-2">
+                                <label class="block text-xs font-bold text-gray-400 mb-1">ANSWERS</label>
+                                <!-- Answer inputs injected here -->
+                            </div>
+                            <button id="btn-add-answer" class="w-full py-2 bg-white/5 hover:bg-white/10 border border-dashed border-white/20 rounded-lg text-sm text-gray-300 transition-colors">+ Add Answer Option</button>
+                            <button id="btn-save-data" class="w-full py-3 bg-secondary hover:bg-pink-600 text-white font-bold rounded-xl mt-6 shadow-lg transition-transform transform active:scale-95">ADD TO FOLDER</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Questions List Area -->
+                    <div class="w-full md:w-2/3 p-6 flex flex-col overflow-hidden">
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <h3 class="font-bold text-gray-400 tracking-wider text-sm">DATA LIST (<span id="q-count">0</span>)</h3>
+                                <p class="text-[10px] text-accent opacity-80 mt-1">* ติ๊กถูก ✔️ เพื่อคัดเลือกข้อนี้ (ใช้ร่วมกับโหมด Question Filter)</p>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs text-gray-400">Select All</span>
+                                <input type="checkbox" id="check-all-q" class="custom-checkbox w-4 h-4 rounded border-gray-500 cursor-pointer">
+                            </div>
+                        </div>
+                        <div id="questions-list" class="flex-1 overflow-y-auto space-y-2 pr-2 pb-20">
+                            <!-- Questions go here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- QR Display Modal -->
+        <div id="qr-display-modal" class="modal-container fixed inset-0 z-[65] bg-black/80 flex items-center justify-center opacity-0 pointer-events-none p-4">
+            <div class="glass p-8 rounded-3xl w-full max-w-sm border border-white/20 transform scale-95 transition-transform duration-300 text-center relative">
+                <h2 class="text-xl font-black text-white mb-4">สแกนเพื่อรับข้อมูล</h2>
+                <div id="qrcode-container" class="bg-white p-4 rounded-xl mx-auto inline-block mb-4"></div>
+                <div class="text-sm text-gray-400 mb-6">ผู้รับสามารถกดปุ่ม <span class="text-accent font-bold">IMPORT</span> แล้วเลือกสแกนกล้อง หรือเลือกรูปภาพนี้ได้เลย</div>
+                
+                <button id="btn-save-qr" class="w-full py-3 bg-secondary hover:bg-pink-600 rounded-xl font-bold transition-colors mb-3 flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    บันทึกรูป QR
+                </button>
+                <button class="btn-close-modal w-full py-3 bg-white/5 hover:bg-white/10 border border-white/20 rounded-xl font-bold transition-colors" data-target="qr-display-modal">ปิดหน้าต่าง</button>
+            </div>
+        </div>
+
+        <!-- Import Method Modal -->
+        <div id="import-method-modal" class="modal-container fixed inset-0 z-[60] bg-black/80 flex items-center justify-center opacity-0 pointer-events-none p-4">
+            <div class="glass p-8 rounded-3xl w-full max-w-md border border-white/20 transform scale-95 transition-transform duration-300">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-black text-accent">นำเข้าข้อมูล</h2>
+                    <button class="btn-close-modal text-gray-400 hover:text-white" data-target="import-method-modal"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+                </div>
+                <div class="space-y-3">
+                    <button id="btn-import-json-method" class="w-full py-4 bg-white/5 hover:bg-white/10 border border-white/20 rounded-xl flex items-center gap-4 px-4 transition-colors">
+                        <div class="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center text-accent"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg></div>
+                        <div class="text-left"><div class="font-bold">ไฟล์ JSON</div><div class="text-xs text-gray-400">จากระบบเดิม หรือมีรูปภาพรวมอยู่ด้วย</div></div>
+                    </button>
+                    <button id="btn-import-camera-method" class="w-full py-4 bg-white/5 hover:bg-white/10 border border-white/20 rounded-xl flex items-center gap-4 px-4 transition-colors">
+                        <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></div>
+                        <div class="text-left"><div class="font-bold">สแกน QR Code</div><div class="text-xs text-gray-400">เปิดกล้องสแกนทันที</div></div>
+                    </button>
+                    <button id="btn-import-qrimg-method" class="w-full py-4 bg-white/5 hover:bg-white/10 border border-white/20 rounded-xl flex items-center gap-4 px-4 transition-colors">
+                        <div class="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div>
+                        <div class="text-left"><div class="font-bold">เลือกรูป QR Code</div><div class="text-xs text-gray-400">นำเข้ารูปภาพ QR จากอัลบั้มเครื่อง</div></div>
+                        <input type="file" id="file-import-qr" accept="image/*" class="hidden">
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- QR Scanner Modal -->
+        <div id="qr-scanner-modal" class="modal-container fixed inset-0 z-[70] bg-black/95 flex flex-col opacity-0 pointer-events-none transition-opacity duration-300">
+            <div class="flex-1 flex items-center justify-center relative w-full h-full max-h-screen p-4">
+                <div class="w-full max-w-lg bg-surface rounded-2xl overflow-hidden shadow-2xl border border-white/20 flex flex-col h-[70vh] md:h-auto md:aspect-square">
+                    <div class="p-4 border-b border-white/10 flex justify-between items-center bg-black/30">
+                        <h3 class="font-bold">กำลังเปิดกล้อง...</h3>
+                        <button id="btn-close-scanner" class="p-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/40">ยกเลิก</button>
+                    </div>
+                    <div id="qr-reader" class="flex-1 w-full bg-black/50"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Export Modal -->
+        <div id="export-modal" class="modal-container fixed inset-0 z-[60] bg-black/80 flex items-center justify-center opacity-0 pointer-events-none p-4">
+            <div class="glass p-8 rounded-3xl w-full max-w-md border border-white/20 transform scale-95 transition-transform duration-300">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-black text-purple-400">EXPORT DATA</h2>
+                    <button class="btn-close-modal text-gray-400 hover:text-white" data-target="export-modal"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="grid grid-cols-1 gap-2">
+                        <button id="btn-export-all" class="w-full py-3 bg-purple-600 hover:bg-purple-500 rounded-xl font-bold transition-colors flex flex-col items-center justify-center">
+                            <span>Export ทั้งหมด</span>
+                            <span class="text-xs font-normal text-purple-200 mt-1">Backup ข้อมูลทุกอย่าง (.json)</span>
+                        </button>
+                        <button id="btn-export-all-qr" class="w-full py-3 bg-blue-600/20 border border-blue-500/50 text-blue-400 hover:bg-blue-600/40 rounded-xl font-bold transition-colors flex justify-center items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+                            สร้าง QR Code (ทั้งหมด)
+                        </button>
+                    </div>
+                    
+                    <div class="border-t border-white/10 pt-4">
+                        <label class="block text-xs font-bold text-gray-400 mb-2">เลือกข้อมูลที่ต้องการ Export</label>
+                        <div id="export-tree-container" class="bg-black/30 border border-white/10 rounded-xl p-3 h-48 overflow-y-auto mb-4 space-y-3">
+                            <!-- Populated dynamically -->
+                        </div>
+                        <button id="btn-export-selected" class="w-full py-3 bg-surface border border-purple-500/50 text-purple-400 hover:bg-purple-500/20 rounded-xl font-bold transition-colors">Export ข้อมูลที่เลือก</button>
+                        <button id="btn-export-qr" class="w-full py-3 mt-2 bg-blue-600/20 border border-blue-500/50 text-blue-400 hover:bg-blue-600/40 rounded-xl font-bold transition-colors flex justify-center items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+                            สร้าง QR Code (ที่เลือก)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Utility Modals -->
+        <!-- Image Zoom Modal -->
+        <div id="image-zoom-modal" class="modal-container fixed inset-0 z-[110] bg-black/95 flex items-center justify-center opacity-0 pointer-events-none overflow-hidden transition-opacity duration-300" onclick="closeZoomModal()">
+            <button class="absolute top-4 right-4 text-white/50 hover:text-white p-2 rounded-full hover:bg-white/10 transition-colors z-[111]">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <div id="zoomed-image-wrapper" class="w-full h-full flex items-center justify-center touch-none">
+                <img id="zoomed-image" class="max-w-full max-h-full object-contain cursor-grab active:cursor-grabbing transition-transform duration-75 origin-center select-none" draggable="false" onclick="event.stopPropagation()">
+            </div>
+        </div>
+        <script>
+            let zoomScale = 1;
+            let zoomPanning = false;
+            let zoomPointX = 0;
+            let zoomPointY = 0;
+            let zoomStart = { x: 0, y: 0 };
+            let initialDistance = 0;
+            let initialScale = 1;
+
+            const zoomImg = document.getElementById('zoomed-image');
+            const zoomWrapper = document.getElementById('zoomed-image-wrapper');
+
+            const applyZoomTransform = () => {
+                // Limit scale
+                if (zoomScale < 0.5) zoomScale = 0.5;
+                if (zoomScale > 5) zoomScale = 5;
+                zoomImg.style.transform = `translate(${zoomPointX}px, ${zoomPointY}px) scale(${zoomScale})`;
+            };
+
+            window.openZoomModal = (src) => {
+                zoomScale = 1;
+                zoomPointX = 0;
+                zoomPointY = 0;
+                applyZoomTransform();
+                zoomImg.src = src;
+                document.getElementById('image-zoom-modal').classList.remove('opacity-0', 'pointer-events-none');
+            };
+
+            window.closeZoomModal = () => {
+                document.getElementById('image-zoom-modal').classList.add('opacity-0', 'pointer-events-none');
+            };
+
+            // Mouse Events
+            zoomWrapper.onmousedown = (e) => {
+                e.preventDefault();
+                zoomStart = { x: e.clientX - zoomPointX, y: e.clientY - zoomPointY };
+                zoomPanning = true;
+            };
+            window.onmouseup = () => { zoomPanning = false; };
+            zoomWrapper.onmousemove = (e) => {
+                if (!zoomPanning) return;
+                e.preventDefault();
+                zoomPointX = (e.clientX - zoomStart.x);
+                zoomPointY = (e.clientY - zoomStart.y);
+                applyZoomTransform();
+            };
+
+            // Wheel Event
+            zoomWrapper.onwheel = (e) => {
+                e.preventDefault();
+                let xs = (e.clientX - zoomPointX) / zoomScale;
+                let ys = (e.clientY - zoomPointY) / zoomScale;
+                let delta = (e.wheelDelta ? e.wheelDelta : -e.deltaY);
+                (delta > 0) ? (zoomScale *= 1.2) : (zoomScale /= 1.2);
+                zoomPointX = e.clientX - xs * zoomScale;
+                zoomPointY = e.clientY - ys * zoomScale;
+                applyZoomTransform();
+            };
+
+            // Touch Events (Pinch and Pan)
+            zoomWrapper.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 2) {
+                    initialDistance = Math.hypot(
+                        e.touches[0].pageX - e.touches[1].pageX,
+                        e.touches[0].pageY - e.touches[1].pageY
+                    );
+                    initialScale = zoomScale;
+                } else if (e.touches.length === 1) {
+                    zoomStart = { x: e.touches[0].pageX - zoomPointX, y: e.touches[0].pageY - zoomPointY };
+                    zoomPanning = true;
+                }
+            }, {passive: false});
+
+            zoomWrapper.addEventListener('touchmove', (e) => {
+                e.preventDefault(); // Prevent page scroll
+                if (e.touches.length === 2) {
+                    const currentDistance = Math.hypot(
+                        e.touches[0].pageX - e.touches[1].pageX,
+                        e.touches[0].pageY - e.touches[1].pageY
+                    );
+                    zoomScale = initialScale * (currentDistance / initialDistance);
+                    applyZoomTransform();
+                } else if (e.touches.length === 1 && zoomPanning) {
+                    zoomPointX = e.touches[0].pageX - zoomStart.x;
+                    zoomPointY = e.touches[0].pageY - zoomStart.y;
+                    applyZoomTransform();
+                }
+            }, {passive: false});
+
+            zoomWrapper.addEventListener('touchend', (e) => {
+                if (e.touches.length < 2) initialDistance = 0;
+                if (e.touches.length === 0) zoomPanning = false;
+            });
+        </script>
+
+        <!-- Alert -->
+        <div id="alert-modal" class="modal-container fixed inset-0 z-[100] bg-black/80 flex items-center justify-center opacity-0 pointer-events-none p-4">
+            <div class="bg-surface border border-white/10 p-6 rounded-2xl max-w-sm w-full text-center shadow-2xl transform scale-95 transition-transform duration-300">
+                <div class="text-primary mb-4 flex justify-center"><svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                <h3 id="alert-title" class="font-bold text-xl mb-2">Alert</h3>
+                <p id="alert-message" class="text-gray-300 text-sm mb-6 whitespace-pre-wrap"></p>
+                <button id="btn-alert-ok" class="w-full py-3 bg-primary hover:bg-indigo-500 text-white font-bold rounded-xl transition-colors">OK</button>
+            </div>
+        </div>
+
+        <!-- Confirm -->
+        <div id="confirm-modal" class="modal-container fixed inset-0 z-[100] bg-black/80 flex items-center justify-center opacity-0 pointer-events-none p-4">
+            <div class="bg-surface border border-red-500/30 p-6 rounded-2xl max-w-sm w-full text-center shadow-2xl transform scale-95 transition-transform duration-300">
+                <div class="text-red-400 mb-4 flex justify-center"><svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg></div>
+                <h3 id="confirm-title" class="font-bold text-xl mb-2 text-white">Confirm</h3>
+                <p id="confirm-message" class="text-gray-300 text-sm mb-6 whitespace-pre-wrap"></p>
+                <div class="flex gap-3">
+                    <button id="btn-confirm-no" class="flex-1 py-3 bg-surface border border-white/20 hover:bg-gray-700 text-white font-bold rounded-xl transition-colors">NO</button>
+                    <button id="btn-confirm-yes" class="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl transition-colors">YES</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Prompt -->
+        <div id="prompt-modal" class="modal-container fixed inset-0 z-[100] bg-black/80 flex items-center justify-center opacity-0 pointer-events-none p-4">
+            <div class="bg-surface border border-white/10 p-6 rounded-2xl max-w-sm w-full shadow-2xl transform scale-95 transition-transform duration-300">
+                <h3 id="prompt-title" class="font-bold text-xl mb-4 text-white text-center">Prompt</h3>
+                <input type="text" id="prompt-input" class="w-full bg-bgDark border border-white/20 rounded-lg p-3 text-white mb-6 focus:border-primary focus:outline-none" autocomplete="off">
+                <div class="flex gap-3">
+                    <button id="btn-prompt-cancel" class="flex-1 py-3 bg-surface border border-white/20 hover:bg-gray-700 text-white font-bold rounded-xl transition-colors">Cancel</button>
+                    <button id="btn-prompt-ok" class="flex-1 py-3 bg-primary hover:bg-indigo-500 text-white font-bold rounded-xl transition-colors">OK</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Auto Login Hint -->
+        <div id="auto-login-modal" class="modal-container fixed inset-0 z-[90] bg-black/85 flex items-center justify-center opacity-0 pointer-events-none p-4">
+            <div class="bg-surface border border-primary/50 p-8 rounded-3xl max-w-md w-full text-center shadow-2xl shadow-primary/20 transform scale-95 transition-transform duration-300 relative">
+                <!-- X button to close -->
+                <button id="btn-auto-login-skip" class="absolute top-4 right-4 p-2 text-gray-400 hover:text-white transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+                
+                <div class="mx-auto w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mb-6 text-blue-400">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                </div>
+                <h3 class="font-black text-2xl mb-3 text-white">LOGIN REQUIRED</h3>
+                <p class="text-gray-300 text-sm mb-6 leading-relaxed">เข้าสู่ระบบเพื่อซิงค์ข้อมูลของคุณผ่าน Cloud เพื่อเล่นข้ามอุปกรณ์<br><br><span class="text-red-400 font-bold bg-red-500/10 p-2 rounded-lg inline-block border border-red-500/30">⚠️ คำเตือน: หากกดกากบาทเพื่อทดลองเล่น ข้อมูลที่บันทึกไว้จะสูญหายทันทีเมื่อคุณ Login ภายหลัง</span></p>
+                <div class="flex flex-col gap-3">
+                    <button id="btn-auto-login-google" class="w-full py-3.5 bg-white text-gray-900 font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-gray-200 transition-colors">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="currentColor" d="M21.35,11.1H12.18V13.83H18.69C18.36,17.64 15.19,19.27 12.19,19.27C8.36,19.27 5,16.25 5,12C5,7.9 8.2,4.73 12.2,4.73C15.29,4.73 17.1,6.7 17.1,6.7L19,4.72C19,4.72 16.56,2 12.1,2C6.42,2 2.03,6.8 2.03,12C2.03,17.05 6.16,22 12.25,22C17.6,22 21.5,18.33 21.5,12.91C21.5,11.76 21.35,11.1 21.35,11.1V11.1Z"/></svg>
+                        Login with Google
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Move Modal -->
+        <div id="move-modal" class="modal-container fixed inset-0 z-[70] bg-black/80 flex items-center justify-center opacity-0 pointer-events-none p-4">
+            <div class="bg-surface border border-white/10 p-6 rounded-2xl max-w-sm w-full shadow-2xl transform scale-95 transition-transform duration-300">
+                <h3 class="font-bold text-xl mb-4 text-white text-center">ย้ายข้อสอบไปที่...</h3>
+                <select id="move-folder-select" class="w-full bg-bgDark border border-white/20 rounded-lg p-3 text-white mb-6 focus:border-primary focus:outline-none"></select>
+                <div class="flex gap-3">
+                    <button class="btn-close-modal flex-1 py-3 bg-surface border border-white/20 hover:bg-gray-700 text-white font-bold rounded-xl transition-colors" data-target="move-modal">Cancel</button>
+                    <button id="btn-move-confirm" class="flex-1 py-3 bg-primary hover:bg-indigo-500 text-white font-bold rounded-xl transition-colors">ยืนยัน</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ==================== Firebase SDK ==================== -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, signInAnonymously, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, deleteDoc, writeBatch, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            projectId: "dairy-puzzle-quiz",
+            authDomain: "dairy-puzzle-quiz.firebaseapp.com",
+            apiKey: "AIzaSyBdMDSDuX6p6mBvJHePwHi273uBTtT7A6E",
+            appId: "1:638793633329:web:95a77f177f2eecc2148f10"
+        };
+
+        let app, auth, db;
+        app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+
+        // Enable offline persistence
+        enableIndexedDbPersistence(db).catch((err) => {
+            if (err.code == 'failed-precondition') {
+                console.warn('Multiple tabs open, persistence can only be enabled in one tab at a a time.');
+            } else if (err.code == 'unimplemented') {
+                console.warn('The current browser does not support all of the features required to enable persistence');
+            }
+        });
+
+        // --- State Management ---
+        // Feature: Image Compression
+        const compressImage = (file) => {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (event) => {
+                    // เนื่องจากเราแยกเก็บภาพ 1 รูปต่อ 1 เอกสารแล้ว (โควต้า 1MB ต่อรูป)
+                    // ถ้าไฟล์ภาพมีขนาดไม่เกิน 700KB (ปลอดภัยสำหรับแปลงเป็น Base64) จะคงต้นฉบับ 100% ไว้ทันที!
+                    if (file.size <= 700 * 1024) {
+                        resolve(event.target.result);
+                        return;
+                    }
+
+                    // หากเป็นรูปที่ใหญ่ทะลุ 700KB (เช่น รูปจากกล้อง) ต้องบีบอัดเพื่อป้องกันฐานข้อมูลล่ม
+                    // แต่จะคงความคมชัดไว้ให้สูงที่สุดเท่าที่จะทำได้ (ความละเอียด 2K)
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 2048; // คงความละเอียดระดับ 2K
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > MAX_WIDTH) {
+                            height = Math.round((height * MAX_WIDTH) / width);
+                            width = MAX_WIDTH;
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.fillRect(0, 0, width, height);
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        // คุณภาพ 92% (สูงมากจนแทบแยกด้วยตาเปล่าไม่ออก)
+                        let compressedData = canvas.toDataURL('image/jpeg', 0.92);
+                        
+                        if (event.target.result.length < compressedData.length) {
+                            resolve(event.target.result);
+                        } else {
+                            resolve(compressedData);
+                        }
+                    };
+                    img.onerror = (err) => reject(err);
+                };
+                reader.onerror = (err) => reject(err);
+            });
+        };
+
+        const imageCache = {}; // Cache for cloud images
+        const state = {
+            editingImage: null,
+            uid: null,
+            userEmail: null,
+            isAnonymous: true,
+            folders: [],
+            categories: [],
+            unsubFolders: null,
+            unsubCats: null,
+            
+            // Game State
+            gamePool: [],
+            currentQIndex: 0,
+            score: 0,
+            startTime: 0,
+            timerInterval: null,
+            wrongAnswersLog: [],
+            timeRemaining: 0,
+            isPaused: false,
+            
+            // Editor State
+            editingFolderId: null,
+            editingQuestionId: null,
+            qToMoveId: null,
+            unsubStreak: null,
+            streak: { current: 0, max: 0, lastPlayedDate: null }
+        };
+
+        // --- Utility Functions ---
+        const generateId = () => Math.random().toString(36).substr(2, 9);
+        
+        const getEl = (id) => document.getElementById(id);
+        
+        const showModal = (id) => {
+            const el = getEl(id);
+            el.classList.remove('pointer-events-none');
+            el.style.opacity = '1';
+            el.querySelector('div').style.transform = 'scale(1)';
+            document.body.style.overflow = 'hidden'; // ป้องกันฉากหลังเลื่อน
+        };
+        
+        const hideModal = (id) => {
+            const el = getEl(id);
+            el.classList.add('pointer-events-none');
+            el.style.opacity = '0';
+            el.querySelector('div').style.transform = 'scale(0.95)';
+            // เช็คว่ามี modal อื่นเปิดอยู่ไหม ถ้าไม่มีค่อยปลดล็อค scroll
+            const openModals = document.querySelectorAll('.modal-container:not(.pointer-events-none)');
+            if (openModals.length <= 1) { // 1 because this one hasn't fully transitioned yet
+                document.body.style.overflow = ''; 
+            }
+        };
+
+        window.customAlert = (msg, title = "Alert") => {
+            return new Promise(resolve => {
+                getEl('alert-title').innerText = title;
+                getEl('alert-message').innerText = msg;
+                showModal('alert-modal');
+                getEl('btn-alert-ok').onclick = () => { hideModal('alert-modal'); resolve(); };
+            });
+        };
+
+        window.customConfirm = (msg, title = "Confirm") => {
+            return new Promise(resolve => {
+                getEl('confirm-title').innerText = title;
+                getEl('confirm-message').innerText = msg;
+                showModal('confirm-modal');
+                getEl('btn-confirm-yes').onclick = () => { hideModal('confirm-modal'); resolve(true); };
+                getEl('btn-confirm-no').onclick = () => { hideModal('confirm-modal'); resolve(false); };
+            });
+        };
+
+        window.customPrompt = (title, defaultValue = "") => {
+            return new Promise(resolve => {
+                getEl('prompt-title').innerText = title;
+                const input = getEl('prompt-input');
+                input.value = defaultValue;
+                showModal('prompt-modal');
+                input.focus();
+                
+                const handleOk = () => { cleanup(); resolve(input.value.trim()); };
+                const handleCancel = () => { cleanup(); resolve(null); };
+                const handleEnter = (e) => { if(e.key === 'Enter') handleOk(); };
+                
+                const cleanup = () => {
+                    hideModal('prompt-modal');
+                    getEl('btn-prompt-ok').removeEventListener('click', handleOk);
+                    getEl('btn-prompt-cancel').removeEventListener('click', handleCancel);
+                    input.removeEventListener('keydown', handleEnter);
+                };
+
+                getEl('btn-prompt-ok').addEventListener('click', handleOk);
+                getEl('btn-prompt-cancel').addEventListener('click', handleCancel);
+                input.addEventListener('keydown', handleEnter);
+            });
+        };
+
+        // Screen switching logic as requested
+        window.switchScreen = (hideId, showId) => {
+            const headerEl = document.querySelector('header');
+            if (headerEl) {
+                if (showId === 'game-screen') {
+                    headerEl.classList.add('hidden-screen');
+                } else {
+                    headerEl.classList.remove('hidden-screen');
+                }
+            }
+            if(showId === 'game-screen') {
+                // Reset opacities inside game-screen
+                getEl('timer-container').style.opacity = '1';
+                getEl('question-text').parentElement.style.opacity = '1';
+                getEl('answer-input').style.opacity = '1';
+                getEl('reveal-area').style.opacity = '1';
+            }
+            getEl(hideId).classList.add('hidden-screen');
+            getEl(hideId).classList.remove('flex'); // Just in case
+            
+            getEl(showId).classList.remove('hidden-screen');
+            if(showId === 'game-screen' || showId === 'summary-screen') {
+                getEl(showId).classList.add('flex');
+            }
+        };
+
+        // Data processing
+        const formatFraction = (text) => {
+            if (!text) return text;
+
+            // Step 1: Temporarily replace <sub>...</sub> and <sup>...</sup> with
+            // private-use Unicode placeholders so they don't confuse the fraction regex.
+            // Use 'gi' (case-insensitive) because some browsers serialize tags as uppercase (<SUB>).
+            const savedTags = [];
+            let processed = text.replace(/<(sub|sup)[^>]*>[^<]*<\/(?:sub|sup)>/gi, (match) => {
+                savedTags.push(match);
+                return '\uE000' + (savedTags.length - 1) + '\uE001';
+            });
+
+            // Step 2: Detect fraction pattern.
+            // IMPORTANT: Exclude <, > from tokens so that leftover HTML tags (e.g. </span>)
+            // are never mistakenly consumed as parts of a fraction.
+            processed = processed.replace(/([^\s\/<>]+)\/([^\s\/<>]+)/g,
+                '<span class="fraction"><span>$1</span><span>$2</span></span>');
+
+            // Step 3: Restore original sub/sup tags from placeholders
+            processed = processed.replace(/\uE000(\d+)\uE001/g, (_, i) => savedTags[parseInt(i)]);
+
+            return '<span class="word-font">' + processed + '</span>';
+        };
+
+        
+        
+        // --- Formatting Toolbar Logic ---
+        window.formatMode = 'normal'; // 'normal', 'superscript', 'subscript'
+
+        window.toggleFormatMode = (mode) => {
+            if (window.formatMode === mode) {
+                window.formatMode = 'normal';
+            } else {
+                window.formatMode = mode;
+            }
+            updateFormatButtons();
+        };
+
+        window.updateFormatButtons = () => {
+            document.querySelectorAll('.format-sup').forEach(btn => btn.classList.toggle('active', window.formatMode === 'superscript'));
+            document.querySelectorAll('.format-sub').forEach(btn => btn.classList.toggle('active', window.formatMode === 'subscript'));
+        };
+        
+        
+        document.addEventListener('keydown', (e) => {
+            const el = e.target;
+            if (el.getAttribute('contenteditable') !== 'true') return;
+            
+            // Block enter key from creating new paragraphs in single-line answer inputs
+            if (e.key === 'Enter' && (el.classList.contains('ans-input') || el.id === 'answer-input')) {
+                e.preventDefault();
+                return;
+            }
+
+            // Manual formatting injection
+            if (window.formatMode !== 'normal') {
+                if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                    e.preventDefault();
+                    if (window.formatMode === 'superscript') {
+                        document.execCommand('insertHTML', false, `<sup>${e.key}</sup>&#8203;`);
+                    } else if (window.formatMode === 'subscript') {
+                        document.execCommand('insertHTML', false, `<sub>${e.key}</sub>&#8203;`);
+                    }
+                }
+            }
+        });
+        
+        // Strip HTML when pasting into contenteditable fields
+        document.addEventListener('paste', (e) => {
+            const el = e.target;
+            if (el.getAttribute('contenteditable') === 'true') {
+                e.preventDefault();
+                const text = (e.originalEvent || e).clipboardData.getData('text/plain');
+                document.execCommand('insertText', false, text);
+            }
+        });
+        
+        // --- Data Sync (Local & Cloud) ---
+        
+        const saveToLocal = async () => {
+            if (typeof localforage !== 'undefined') {
+                await localforage.setItem('dairy_folders', state.folders);
+                await localforage.setItem('dairy_categories', state.categories);
+                await localforage.setItem('dairy_streak', state.streak);
+            }
+        };
+        
+        // Save/Load home screen settings separately (lightweight, no cloud sync needed)
+        const saveSettings = () => {
+            try {
+                const settings = {
+                    toggleNoTime: getEl('toggle-no-time').checked,
+                    settingTime: getEl('setting-time').value,
+                    toggleAllQuestions: getEl('toggle-all-questions').checked,
+                    settingCount: getEl('setting-count').value,
+                    toggleSwap: getEl('toggle-swap').checked,
+                    toggleFilter: getEl('toggle-filter').checked,
+                    settingMode: getEl('setting-mode').value,
+                    collapsedCats: state.collapsedCats || {}
+                };
+                localStorage.setItem('dairy_settings', JSON.stringify(settings));
+            } catch(e) { /* ignore */ }
+        };
+        
+        const loadSettings = () => {
+            try {
+                const raw = localStorage.getItem('dairy_settings');
+                if (!raw) return;
+                const s = JSON.parse(raw);
+                
+                if (typeof s.toggleNoTime === 'boolean') {
+                    getEl('toggle-no-time').checked = s.toggleNoTime;
+                    getEl('setting-time').disabled = s.toggleNoTime;
+                    getEl('setting-time').style.opacity = s.toggleNoTime ? '0.5' : '1';
+                }
+                if (s.settingTime) getEl('setting-time').value = s.settingTime;
+                
+                if (typeof s.toggleAllQuestions === 'boolean') {
+                    getEl('toggle-all-questions').checked = s.toggleAllQuestions;
+                    getEl('setting-count').disabled = s.toggleAllQuestions;
+                    getEl('setting-count').style.opacity = s.toggleAllQuestions ? '0.5' : '1';
+                }
+                if (s.settingCount) getEl('setting-count').value = s.settingCount;
+                
+                if (typeof s.toggleSwap === 'boolean') getEl('toggle-swap').checked = s.toggleSwap;
+                if (typeof s.toggleFilter === 'boolean') getEl('toggle-filter').checked = s.toggleFilter;
+                if (s.settingMode) getEl('setting-mode').value = s.settingMode;
+                if (s.collapsedCats) state.collapsedCats = s.collapsedCats;
+            } catch(e) { /* ignore */ }
+        };
+
+        const migrateData = async () => {
+            let changed = false;
+            if (state.categories) {
+                state.categories.forEach(c => {
+                    if (!c.id) { c.id = generateId(); changed = true; }
+                    else if (typeof c.id !== 'string') { c.id = String(c.id); changed = true; }
+                });
+            }
+            if (state.folders) {
+                state.folders.forEach(f => {
+                    if (!f.id) { f.id = generateId(); changed = true; }
+                    else if (typeof f.id !== 'string') { f.id = String(f.id); changed = true; }
+                    
+                    if (f.categoryId && typeof f.categoryId !== 'string') { f.categoryId = String(f.categoryId); changed = true; }
+                    
+                    if (!f.questions) { f.questions = []; changed = true; }
+                    else {
+                        f.questions.forEach(q => {
+                            if (q.id && typeof q.id !== 'string') { q.id = String(q.id); changed = true; }
+                        });
+                    }
+                });
+            }
+            if (changed) await saveToLocal();
+        };
+
+        const loadFromLocal = async () => {
+            if (typeof localforage === 'undefined') return;
+            
+            // Migration from localStorage to localforage
+            if (localStorage.getItem('dairy_folders') || localStorage.getItem('dairy_categories')) {
+                const f = localStorage.getItem('dairy_folders');
+                const c = localStorage.getItem('dairy_categories');
+                const s = localStorage.getItem('dairy_streak');
+                
+                if(f) await localforage.setItem('dairy_folders', JSON.parse(f));
+                if(c) await localforage.setItem('dairy_categories', JSON.parse(c));
+                if(s) await localforage.setItem('dairy_streak', JSON.parse(s));
+                
+                // Clear old localStorage to prevent duplicate migration
+                localStorage.removeItem('dairy_folders');
+                localStorage.removeItem('dairy_categories');
+                localStorage.removeItem('dairy_streak');
+            }
+
+            const f = await localforage.getItem('dairy_folders');
+            const c = await localforage.getItem('dairy_categories');
+            const s = await localforage.getItem('dairy_streak');
+            
+            if(f) {
+                state.folders = f;
+                // Pre-warm imageCache from local storage
+                state.folders.forEach(folder => {
+                    folder.questions.forEach(q => {
+                        if (q.img && q.img.startsWith('data:image')) {
+                            const imgId = 'img_' + q.id;
+                            imageCache[imgId] = q.img;
+                        }
+                    });
+                });
+            }
+            if(c) state.categories = c;
+            if(s) state.streak = s;
+            
+            await migrateData();
+            if(typeof window.updateStreakUI === 'function') window.updateStreakUI();
+        };
+
+        const syncToCloud = async (type, item) => {
+            if (!state.uid || state.isAnonymous) return;
+            try {
+                if (type === 'folder') {
+                    // Extract images to prevent 1MB document limit
+                    const folderCopy = JSON.parse(JSON.stringify(item));
+                    const imgPromises = [];
+                    
+                    folderCopy.questions.forEach(q => {
+                        if (q.img && q.img.startsWith('data:image')) {
+                            const imgId = 'img_' + q.id;
+                            imageCache[imgId] = q.img; // cache locally
+                            const imgDocRef = doc(db, `artifacts/${firebaseConfig.appId}/users/${state.uid}/images`, imgId);
+                            imgPromises.push(setDoc(imgDocRef, { base64: q.img }));
+                            q.img = 'CLOUD_IMG|' + imgId;
+                        }
+                    });
+                    
+                    const docRef = doc(db, `artifacts/${firebaseConfig.appId}/users/${state.uid}/folders`, item.id);
+                    await setDoc(docRef, folderCopy);
+                    
+                    if (imgPromises.length > 0) {
+                        await Promise.all(imgPromises);
+                    }
+                } else if (type === 'delete_folder') {
+                    const docRef = doc(db, `artifacts/${firebaseConfig.appId}/users/${state.uid}/folders`, item);
+                    await deleteDoc(docRef);
+                } else if (type === 'categories') {
+                    const docRef = doc(db, `artifacts/${firebaseConfig.appId}/users/${state.uid}/settings`, 'categories');
+                    await setDoc(docRef, { list: state.categories });
+                } else if (type === 'streak') {
+                    const docRef = doc(db, `artifacts/${firebaseConfig.appId}/users/${state.uid}/settings`, 'streak');
+                    await setDoc(docRef, state.streak);
+                }
+            } catch (e) {
+                console.error("Cloud sync error:", e);
+                if(e.message && (e.message.includes('exceeds the maximum allowed size') || e.message.includes('1,048,576 bytes'))) {
+                    customAlert("⚠️ ไม่สามารถบันทึกขึ้น Cloud ได้! (ขนาดโฟลเดอร์เกิน 1MB)<br><br>สาเหตุ: รูปภาพที่สะสมในหมวดหมู่นี้มีขนาดรวมกันใหญ่เกินไป<br><br>วิธีแก้: ลบรูปภาพล่าสุดออก แล้วอัพโหลดใหม่ (ระบบอัพเดทการบีบอัดใหม่แล้วจะช่วยให้เล็กลง)");
+                }
+            }
+        };
+
+        const setupRealtimeCloudSync = () => {
+            if (!state.uid || state.isAnonymous) return;
+            
+            if (state.unsubFolders) state.unsubFolders();
+            if (state.unsubCats) state.unsubCats();
+
+            state.unsubFolders = onSnapshot(collection(db, `artifacts/${firebaseConfig.appId}/users/${state.uid}/folders`), async (snapshot) => {
+                const folders = [];
+                snapshot.forEach(doc => folders.push(doc.data()));
+                
+                // Fetch missing cloud images
+                for (const f of folders) {
+                    for (const q of f.questions) {
+                        if (q.img && q.img.startsWith('CLOUD_IMG|')) {
+                            const imgId = q.img.split('|')[1];
+                            if (imageCache[imgId]) {
+                                q.img = imageCache[imgId];
+                            } else {
+                                try {
+                                    const imgRef = doc(db, `artifacts/${firebaseConfig.appId}/users/${state.uid}/images`, imgId);
+                                    const imgSnap = await getDoc(imgRef);
+                                    if (imgSnap.exists() && imgSnap.data().base64) {
+                                        q.img = imgSnap.data().base64;
+                                        imageCache[imgId] = q.img;
+                                    } else {
+                                        q.img = null;
+                                    }
+                                } catch (e) {
+                                    console.error("Failed to load cloud image", e);
+                                    q.img = null;
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                state.folders = folders;
+                migrateData();
+                saveToLocal();
+                renderDatabase();
+                if(state.editingFolderId) renderEditor(state.editingFolderId);
+            });
+
+            state.unsubCats = onSnapshot(doc(db, `artifacts/${firebaseConfig.appId}/users/${state.uid}/settings`, 'categories'), (docSnap) => {
+                if (docSnap.exists() && docSnap.data().list) {
+                    state.categories = docSnap.data().list;
+                    migrateData();
+                    saveToLocal();
+                    renderDatabase();
+                }
+            });
+
+            state.unsubStreak = onSnapshot(doc(db, `artifacts/${firebaseConfig.appId}/users/${state.uid}/settings`, 'streak'), (docSnap) => {
+                if (docSnap.exists()) {
+                    state.streak = docSnap.data();
+                    saveToLocal();
+                    if(typeof updateStreakUI === 'function') updateStreakUI();
+                }
+            });
+        };
+
+        // --- Authentication ---
+        const initAuth = () => {
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    state.uid = user.uid;
+                    state.isAnonymous = user.isAnonymous;
+                    state.userEmail = user.email || 'Guest User';
+                    
+                    getEl('user-email').innerText = state.userEmail;
+                    
+                    if (state.isAnonymous) {
+                        getEl('btn-login-google').classList.remove('hidden');
+                        getEl('btn-logout').classList.add('hidden');
+                        // Show auto-login modal if not shown this session
+                        if (!sessionStorage.getItem('autoLoginShown')) {
+                            showModal('auto-login-modal');
+                            sessionStorage.setItem('autoLoginShown', 'true');
+                        }
+                    } else {
+                        getEl('btn-login-google').classList.add('hidden');
+                        getEl('btn-logout').classList.remove('hidden');
+                    }
+                    
+                    // After auth, load local first for instant UI, then sync
+                    await loadFromLocal();
+                    loadSettings();
+                    setupRealtimeCloudSync();
+                    
+                    getEl('loading-overlay').style.opacity = '0';
+                    setTimeout(() => getEl('loading-overlay').classList.add('hidden-screen'), 500);
+
+                } else {
+                    // No user, auto sign in anonymously
+                    try {
+                        await signInAnonymously(auth);
+                    } catch (error) {
+                        console.error("Auth error", error);
+                        customAlert("Authentication failed: " + error.message);
+                    }
+                }
+            });
+        };
+
+        window.loginWithGoogle = async () => {
+            const provider = new GoogleAuthProvider();
+            try {
+                // As per requirement: data saved before login will be lost.
+                // We clear local data so that when snapshot loads the Cloud data, it's fresh.
+                state.folders = [];
+                state.categories = [];
+                saveToLocal();
+                
+                await signInWithPopup(auth, provider);
+                hideModal('auto-login-modal');
+                
+                customAlert("เข้าสู่ระบบด้วย Google สำเร็จ", "Success");
+            } catch (error) {
+                console.error(error);
+                if(error.code !== 'auth/popup-closed-by-user') {
+                    customAlert("Login failed: " + error.message + "\n\n(Note: Google Login might not work if opened via file://. Please host it or run via a local web server.)");
+                }
+            }
+        };
+
+        window.logout = async () => {
+            
+            const res = await customConfirm("ต้องการออกจากระบบหรือไม่? (ข้อมูลจะถูกล้างจากเครื่องและเปลี่ยนเป็น Guest)");
+            if (res) {
+                state.folders = [];
+                state.categories = [];
+                saveToLocal();
+                if(state.unsubFolders) state.unsubFolders();
+                if(state.unsubCats) state.unsubCats();
+                await signOut(auth);
+            }
+        };
+
+        // --- Database & Category UI ---
+        const renderDatabase = () => {
+            const uncatList = getEl('uncategorized-list');
+            const catList = getEl('categories-list');
+            
+            uncatList.innerHTML = '';
+            catList.innerHTML = '';
+            
+            let uncatCount = 0;
+            const uncatFragment = document.createDocumentFragment();
+            
+            // Render Uncategorized
+            const isOrphan = (f) => !f.categoryId || !state.categories.some(c => c.id === f.categoryId);
+            state.folders.filter(isOrphan).forEach(f => {
+                uncatCount++;
+                uncatFragment.appendChild(createFolderCard(f));
+            });
+            uncatList.appendChild(uncatFragment);
+            getEl('uncat-count').innerText = uncatCount;
+
+            // Render Categories
+            if (!state.collapsedCats) state.collapsedCats = {};
+            const catFragment = document.createDocumentFragment();
+            state.categories.forEach((cat, index) => {
+                const catDiv = document.createElement('div');
+                catDiv.className = 'bg-black/20 rounded-2xl border border-white/5 overflow-hidden flex flex-col';
+                
+                const isCollapsed = !!state.collapsedCats[cat.id];
+                const foldersInCat = state.folders.filter(f => f.categoryId === cat.id);
+                const folderCount = foldersInCat.length;
+                
+                // Cat Header
+                const header = document.createElement('div');
+                header.className = 'p-3 bg-white/5 flex justify-between items-center border-b border-white/5 select-none';
+                header.innerHTML = `
+                    <div class="font-bold text-secondary flex items-center flex-1 cursor-pointer" data-cat-toggle="${cat.id}">
+                        <svg class="w-4 h-4 mr-2 transition-transform duration-200 ${isCollapsed ? '-rotate-90' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        ${cat.name}
+                        <span class="ml-2 text-xs bg-white/10 text-gray-400 px-2 py-0.5 rounded-full font-normal ${isCollapsed ? '' : 'hidden'}" data-cat-badge="${cat.id}">${folderCount} folders</span>
+                    </div>
+                    <div class="flex gap-1" onclick="event.stopPropagation()">
+                        <button class="p-1 hover:bg-white/10 rounded" onclick="window.moveCat(${index}, -1)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg></button>
+                        <button class="p-1 hover:bg-white/10 rounded" onclick="window.moveCat(${index}, 1)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button>
+                        <button class="p-1 hover:bg-white/10 rounded text-blue-400" onclick="window.renameCat('${cat.id}')"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button>
+                        <button class="p-1 hover:bg-white/10 rounded text-red-400" onclick="window.deleteCat('${cat.id}')"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                    </div>
+                `;
+                
+                // Add toggle click handler to the header name area
+                header.querySelector('[data-cat-toggle]').addEventListener('click', () => {
+                    state.collapsedCats[cat.id] = !state.collapsedCats[cat.id];
+                    const dropEl = catDiv.querySelector('.drop-zone');
+                    const chevron = header.querySelector('svg');
+                    const badge = header.querySelector('[data-cat-badge]');
+                    if (state.collapsedCats[cat.id]) {
+                        dropEl.style.maxHeight = '0px';
+                        dropEl.style.padding = '0';
+                        dropEl.style.overflow = 'hidden';
+                        chevron.classList.add('-rotate-90');
+                        if (badge) badge.classList.remove('hidden');
+                    } else {
+                        dropEl.style.maxHeight = '';
+                        dropEl.style.padding = '';
+                        dropEl.style.overflow = '';
+                        chevron.classList.remove('-rotate-90');
+                        if (badge) badge.classList.add('hidden');
+                    }
+                    if (typeof saveSettings === 'function') saveSettings();
+                });
+                
+                catDiv.appendChild(header);
+
+                // Cat Dropzone
+                const dropZone = document.createElement('div');
+                dropZone.className = 'p-3 min-h-[60px] drop-zone space-y-2 transition-all duration-200';
+                dropZone.dataset.catId = cat.id;
+                
+                // Apply collapsed state
+                if (isCollapsed) {
+                    dropZone.style.maxHeight = '0px';
+                    dropZone.style.padding = '0';
+                    dropZone.style.overflow = 'hidden';
+                    dropZone.style.minHeight = '0';
+                }
+                
+                const fFrag = document.createDocumentFragment();
+                foldersInCat.forEach(f => {
+                    fFrag.appendChild(createFolderCard(f));
+                });
+                dropZone.appendChild(fFrag);
+                
+                catDiv.appendChild(dropZone);
+                catFragment.appendChild(catDiv);
+            });
+            catList.appendChild(catFragment);
+
+            // Initialize SortableJS for drag and drop
+            document.querySelectorAll('.drop-zone').forEach(zone => {
+                new Sortable(zone, {
+                    group: 'shared',
+                    animation: 150,
+                    ghostClass: 'opacity-50',
+                    onEnd: function (evt) {
+                        const folderId = evt.item.dataset.folderId;
+                        const toCatId = evt.to.dataset.catId || null; // null for uncat
+                        const folder = state.folders.find(f => f.id === folderId);
+                        if(folder && folder.categoryId !== toCatId) {
+                            folder.categoryId = toCatId;
+                            saveDataAndSync('folder', folder);
+                        }
+                    },
+                });
+            });
+        };
+
+        const createFolderCard = (f) => {
+            const div = document.createElement('div');
+            div.className = 'bg-surface border border-white/10 p-3 rounded-xl flex justify-between items-center cursor-pointer hover:bg-white/5 transition-colors group';
+            div.dataset.folderId = f.id;
+            
+            const qCount = f.questions ? f.questions.length : 0;
+            const checkedCount = f.questions ? f.questions.filter(q=>q.isSelected).length : 0;
+
+            div.innerHTML = `
+                <div class="flex-1 overflow-hidden" onclick="window.openEditor('${f.id}')">
+                    <div class="font-bold truncate text-sm">${f.name}</div>
+                    <div class="text-xs text-gray-400 mt-1 flex items-center">${qCount} items <span class="text-accent ml-2 flex items-center"><svg class="w-4 h-4 inline-block text-accent mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg> ${checkedCount}</span></div>
+                </div>
+                <div class="ml-3 flex items-center justify-center p-2 rounded-lg hover:bg-white/10" onclick="event.stopPropagation()">
+                    <input type="checkbox" class="custom-checkbox w-5 h-5 rounded border-gray-500 cursor-pointer" ${f.isSelectedForGame ? 'checked' : ''} onchange="window.toggleFolderGameSelection('${f.id}', this.checked)">
+                </div>
+            `;
+            return div;
+        };
+
+        let saveTimeout;
+        const saveDataAndSync = (type, item) => {
+            syncToCloud(type, item);
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+                saveToLocal();
+            }, 500); // 500ms debounce for local DB writes
+        };
+
+        window.toggleFolderGameSelection = (id, isChecked) => {
+            const f = state.folders.find(x => x.id === id);
+            if(f) {
+                f.isSelectedForGame = isChecked;
+                saveDataAndSync('folder', f);
+            }
+        };
+
+        window.createNewFolder = async () => {
+            const name = await customPrompt("ชื่อโฟลเดอร์ใหม่:");
+            if(name) {
+                const newF = { id: generateId(), name, categoryId: null, questions: [], isSelectedForGame: true };
+                state.folders.push(newF);
+                saveDataAndSync('folder', newF);
+                renderDatabase();
+            }
+        };
+
+        window.createNewCat = async () => {
+            const name = await customPrompt("ชื่อหมวดหมู่ใหม่:");
+            if(name) {
+                state.categories.push({ id: generateId(), name });
+                saveDataAndSync('categories');
+                renderDatabase();
+            }
+        };
+
+        window.renameCat = async (id) => {
+            const cat = state.categories.find(c => c.id === id);
+            const newName = await customPrompt("เปลี่ยนชื่อหมวดหมู่:", cat.name);
+            if(newName && newName !== cat.name) {
+                cat.name = newName;
+                saveDataAndSync('categories');
+                renderDatabase();
+            }
+        };
+
+        window.deleteCat = async (id) => {
+            const foldersInCat = state.folders.filter(f => f.categoryId === id);
+            if(foldersInCat.length > 0) {
+                if(!(await customConfirm("หมวดหมู่นี้มีโฟลเดอร์อยู่ข้างใน หากลบ โฟลเดอร์ทั้งหมดในหมวดหมู่นี้จะถูกลบไปด้วย ยืนยันการลบหรือไม่?"))) return;
+                // Delete folders
+                for(let f of foldersInCat) {
+                    state.folders = state.folders.filter(x => x.id !== f.id);
+                    syncToCloud('delete_folder', f.id);
+                }
+            } else {
+                if(!(await customConfirm("ยืนยันการลบหมวดหมู่นี้?"))) return;
+            }
+            state.categories = state.categories.filter(c => c.id !== id);
+            saveDataAndSync('categories');
+            saveToLocal();
+            renderDatabase();
+        };
+
+        window.moveCat = (index, dir) => {
+            if(index + dir < 0 || index + dir >= state.categories.length) return;
+            const temp = state.categories[index];
+            state.categories[index] = state.categories[index + dir];
+            state.categories[index + dir] = temp;
+            saveDataAndSync('categories');
+            renderDatabase();
+        };
+
+        // --- Question Editor ---
+        window.openEditor = (folderId) => {
+            state.editingFolderId = folderId;
+            window.formatMode = 'normal';
+            if (typeof updateFormatButtons === 'function') updateFormatButtons();
+            renderEditor(folderId);
+            showModal('editor-modal');
+        };
+
+        const renderEditor = (folderId) => {
+            const folder = state.folders.find(f => f.id === folderId);
+            if(!folder) return;
+            
+            getEl('editor-folder-name').innerText = folder.name;
+            getEl('editor-folder-id').innerText = folder.id;
+            getEl('q-count').innerText = folder.questions.length;
+            
+            // Check all state
+            const allChecked = folder.questions.length > 0 && folder.questions.every(q => q.isSelected);
+            getEl('check-all-q').checked = allChecked;
+
+            renderQuestionsList(folder);
+            cancelEditMode();
+        };
+
+        const renderQuestionsList = (folder) => {
+            const list = getEl('questions-list');
+            list.innerHTML = '';
+            
+            // Detect identical questions globally for merging
+            const globalQCounts = {};
+            state.folders.forEach(f => {
+                f.questions.forEach(q => {
+                    const qStr = q.q.replace(/<[^>]*>/g, '').replace(/[^\p{L}\p{N}]/gu, '').toLowerCase();
+                    globalQCounts[qStr] = (globalQCounts[qStr] || 0) + 1;
+                });
+            });
+
+            folder.questions.forEach((q, index) => {
+                const qStr = q.q.replace(/<[^>]*>/g, '').replace(/[^\p{L}\p{N}]/gu, '').toLowerCase();
+                const isGrouped = globalQCounts[qStr] > 1;
+                
+                const div = document.createElement('div');
+                div.className = `p-3 rounded-xl border flex gap-3 ${isGrouped ? 'bg-emerald-900/20 border-emerald-500/30' : 'bg-surface border-white/10'}`;
+                
+                div.innerHTML = `
+                    <div class="flex items-start pt-1">
+                        <input type="checkbox" class="custom-checkbox w-5 h-5 rounded border-gray-500 cursor-pointer" ${q.isSelected ? 'checked' : ''} onchange="window.toggleQSelection('${q.id}', this.checked)">
+                    </div>
+                    <div class="flex-1 overflow-hidden">
+                        ${isGrouped ? `<div class="text-[10px] text-emerald-400 font-bold mb-1 tracking-wider uppercase">🔗 คำถามซ้ำ (จะถูกรวมอัตโนมัติในเกม)</div>` : ''}
+                        <div class="font-bold text-sm mb-1 clean-text flex items-start gap-2">
+                            ${q.img ? `<img src="${q.img}" class="w-8 h-8 object-cover rounded border border-white/20 flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity" onclick="window.openZoomModal(this.src)">` : ''}
+                            <div>${formatFraction(q.q.replace(/\n/g, '<br>'))}</div>
+                        </div>
+                        <div class="text-xs text-secondary font-mono clean-text">${q.a.join(' , ')}</div>
+                    </div>
+                    <div class="flex flex-col gap-1 items-center justify-center">
+                        <div class="flex gap-1">
+                            <button class="p-1.5 bg-white/5 hover:bg-white/10 rounded text-gray-400" onclick="window.moveQ(${index}, -1)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg></button>
+                            <button class="p-1.5 bg-white/5 hover:bg-white/10 rounded text-gray-400" onclick="window.moveQ(${index}, 1)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button>
+                        </div>
+                        <div class="flex gap-1 mt-1">
+                            <button class="p-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 rounded" onclick="window.openMoveModal('${q.id}')" title="Move"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg></button>
+                            <button class="p-1.5 bg-white/10 hover:bg-white/20 text-white rounded" onclick="window.editQ('${q.id}')" title="Edit"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button>
+                            <button class="p-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded" onclick="window.deleteQ('${q.id}')" title="Delete"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                        </div>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        };
+
+        window.toggleQSelection = (qId, isChecked) => {
+            const f = state.folders.find(x => x.id === state.editingFolderId);
+            const q = f.questions.find(x => x.id === qId);
+            if(q) {
+                q.isSelected = isChecked;
+                saveDataAndSync('folder', f);
+                getEl('check-all-q').checked = f.questions.every(x => x.isSelected);
+            }
+        };
+
+        getEl('check-all-q').addEventListener('change', (e) => {
+            const f = state.folders.find(x => x.id === state.editingFolderId);
+            f.questions.forEach(q => q.isSelected = e.target.checked);
+            saveDataAndSync('folder', f);
+            renderQuestionsList(f);
+        });
+
+        // Form logic
+        const addAnswerInput = (val = "") => {
+            const container = getEl('answers-container');
+            const div = document.createElement('div');
+            div.className = 'flex gap-2 mb-2 answer-row';
+            div.innerHTML = `
+                <div contenteditable="true" class="flex-1 bg-surface border border-white/20 rounded-lg p-2 text-sm focus:outline-none focus:border-secondary ans-input word-font clean-text" placeholder="Answer..." style="min-height: 38px;">${val}</div>
+                <button class="px-3 bg-red-500/20 hover:bg-red-500/40 text-red-400 rounded-lg" onclick="this.parentElement.remove()">X</button>
+            `;
+            container.appendChild(div);
+        };
+
+        getEl('btn-add-answer').onclick = () => addAnswerInput();
+
+        const cancelEditMode = () => {
+            state.editingQuestionId = null;
+            getEl('editor-form-title').querySelector('span').innerText = 'ADD DATA';
+            getEl('btn-cancel-edit').classList.add('hidden');
+            const btnSave = getEl('btn-save-data');
+            btnSave.innerText = 'ADD TO FOLDER';
+            btnSave.classList.replace('bg-blue-600', 'bg-secondary');
+            btnSave.classList.replace('hover:bg-blue-500', 'hover:bg-pink-600');
+            getEl('edit-q').innerHTML = '';
+            getEl('answers-container').innerHTML = '';
+            
+            // Clear image state
+            state.editingImage = null;
+            if (getEl('edit-img-preview-container')) getEl('edit-img-preview-container').classList.add('hidden');
+            if (getEl('edit-img-input')) getEl('edit-img-input').value = '';
+            if (getEl('edit-img-preview')) getEl('edit-img-preview').src = '';
+
+            addAnswerInput(); // Add one empty
+        };
+
+        getEl('btn-cancel-edit').onclick = cancelEditMode;
+
+        getEl('btn-save-data').onclick = () => {
+            const f = state.folders.find(x => x.id === state.editingFolderId);
+            if(!f) return;
+            
+            const qText = getEl('edit-q').innerHTML.trim();
+            const aInputs = document.querySelectorAll('.ans-input');
+            const answers = [];
+            aInputs.forEach(inp => {
+                const val = inp.innerHTML.trim().toUpperCase();
+                if(val) answers.push(val);
+            });
+
+            if(!qText || answers.length === 0) {
+                customAlert("กรุณากรอกโจทย์และคำตอบให้ครบ");
+                return;
+            }
+
+            if(state.editingQuestionId) {
+                // Edit
+                const q = f.questions.find(x => x.id === state.editingQuestionId);
+                q.q = qText;
+                q.a = answers;
+                q.img = state.editingImage || null;
+            } else {
+                // Add new
+                f.questions.unshift({
+                    id: generateId(),
+                    q: qText,
+                    a: answers,
+                    isSelected: true,
+                    img: state.editingImage || null
+                });
+            }
+            
+            saveDataAndSync('folder', f);
+            renderEditor(state.editingFolderId);
+        };
+
+        window.editQ = (qId) => {
+            const f = state.folders.find(x => x.id === state.editingFolderId);
+            const q = f.questions.find(x => x.id === qId);
+            if(!q) return;
+
+            state.editingQuestionId = qId;
+            getEl('editor-form-title').querySelector('span').innerText = 'EDIT DATA';
+            getEl('btn-cancel-edit').classList.remove('hidden');
+            const btnSave = getEl('btn-save-data');
+            btnSave.innerText = 'SAVE EDIT';
+            btnSave.classList.replace('bg-secondary', 'bg-blue-600');
+            btnSave.classList.replace('hover:bg-pink-600', 'hover:bg-blue-500');
+
+            getEl('edit-q').innerHTML = q.q;
+            getEl('answers-container').innerHTML = '';
+            q.a.forEach(ans => addAnswerInput(ans));
+            
+            // Load image state
+            if (q.img) {
+                state.editingImage = q.img;
+                getEl('edit-img-preview').src = q.img;
+                getEl('edit-img-preview-container').classList.remove('hidden');
+            } else {
+                state.editingImage = null;
+                getEl('edit-img-preview-container').classList.add('hidden');
+                getEl('edit-img-input').value = '';
+            }
+
+        };
+
+        window.deleteQ = async (qId) => {
+            if(await customConfirm("ลบข้อสอบนี้?")) {
+                const f = state.folders.find(x => x.id === state.editingFolderId);
+                f.questions = f.questions.filter(x => x.id !== qId);
+                saveDataAndSync('folder', f);
+                renderEditor(state.editingFolderId);
+            }
+        };
+
+        window.moveQ = (index, dir) => {
+            const f = state.folders.find(x => x.id === state.editingFolderId);
+            if(index + dir < 0 || index + dir >= f.questions.length) return;
+            const temp = f.questions[index];
+            f.questions[index] = f.questions[index + dir];
+            f.questions[index + dir] = temp;
+            saveDataAndSync('folder', f);
+            renderQuestionsList(f);
+        };
+
+        window.openMoveModal = (qId) => {
+            state.qToMoveId = qId;
+            const select = getEl('move-folder-select');
+            select.innerHTML = '';
+            state.folders.forEach(f => {
+                if(f.id !== state.editingFolderId) {
+                    select.innerHTML += `<option value="${f.id}">${f.name}</option>`;
+                }
+            });
+            if(select.options.length === 0) {
+                customAlert("ไม่มีโฟลเดอร์อื่นให้ย้ายไป");
+                return;
+            }
+            showModal('move-modal');
+        };
+
+        getEl('btn-move-confirm').onclick = () => {
+            const targetFolderId = getEl('move-folder-select').value;
+            const sourceF = state.folders.find(x => x.id === state.editingFolderId);
+            const targetF = state.folders.find(x => x.id === targetFolderId);
+            
+            const qIndex = sourceF.questions.findIndex(x => x.id === state.qToMoveId);
+            if(qIndex > -1) {
+                const q = sourceF.questions.splice(qIndex, 1)[0];
+                targetF.questions.unshift(q);
+                
+                saveDataAndSync('folder', sourceF);
+                saveDataAndSync('folder', targetF);
+                
+                hideModal('move-modal');
+                renderEditor(state.editingFolderId);
+                customAlert("ย้ายสำเร็จ", "Success");
+            }
+        };
+
+        getEl('btn-rename-folder').onclick = async () => {
+            const f = state.folders.find(x => x.id === state.editingFolderId);
+            const newName = await customPrompt("เปลี่ยนชื่อโฟลเดอร์:", f.name);
+            if(newName && newName !== f.name) {
+                f.name = newName;
+                saveDataAndSync('folder', f);
+                getEl('editor-folder-name').innerText = f.name;
+            }
+        };
+
+
+
+        window.closeEditor = () => {
+            hideModal('editor-modal');
+            hideModal('database-modal');
+            state.editingFolderId = null;
+        };
+
+        window.backToDb = () => {
+            window.closeEditor();
+            showModal('database-modal');
+        };
+
+        getEl('btn-delete-folder').onclick = async () => {
+            const f = state.folders.find(x => x.id === state.editingFolderId);
+            if(f.questions.length > 0) {
+                if(!(await customConfirm("โฟลเดอร์นี้มีคำถามอยู่ข้างใน ยืนยันการลบโฟลเดอร์พร้อมคำถามทั้งหมดหรือไม่?"))) return;
+            } else {
+                if(!(await customConfirm("ยืนยันการลบโฟลเดอร์นี้?"))) return;
+            }
+            state.folders = state.folders.filter(x => x.id !== f.id);
+            saveToLocal();
+            syncToCloud('delete_folder', f.id);
+            hideModal('editor-modal');
+            renderDatabase();
+        };
+
+        // --- Global Search ---
+        let searchTimeout;
+        const handleSearch = (e) => {
+            clearTimeout(searchTimeout);
+            const query = e.target.value.toLowerCase().trim();
+            const resultsDiv = getEl('global-search-results');
+            
+            if(query.length < 1) {
+                resultsDiv.innerHTML = '';
+                resultsDiv.classList.add('hidden');
+                return;
+            }
+
+            searchTimeout = setTimeout(() => {
+                resultsDiv.innerHTML = '';
+                let results = [];
+                state.folders.forEach(f => {
+                    if(!f.questions) return;
+                    
+                    // Get category name if exists
+                    let catName = null;
+                    if (f.categoryId) {
+                        const cat = state.categories.find(c => c.id === f.categoryId);
+                        if (cat) catName = cat.name;
+                    }
+
+                    f.questions.forEach(q => {
+                        const qStr = String(q.q).toLowerCase();
+                        const aMatch = q.a && q.a.some(ans => String(ans).toLowerCase().includes(query));
+                        if(qStr.includes(query) || aMatch) {
+                            results.push({folderId: f.id, folderName: f.name, catName: catName, qText: q.q, aText: q.a});
+                        }
+                    });
+                });
+
+                if(results.length === 0) {
+                    resultsDiv.innerHTML = '<div class="p-4 text-gray-400 text-center">ไม่พบผลลัพธ์</div>';
+                } else {
+                    // limit to 10
+                    results.slice(0, 10).forEach(res => {
+                        const div = document.createElement('div');
+                        div.className = 'p-3 border-b border-white/5 hover:bg-white/10 cursor-pointer flex flex-col gap-1';
+                        
+                        const catBadge = res.catName ? `<span class="text-[10px] bg-secondary/20 text-secondary px-1.5 py-0.5 rounded border border-secondary/50 uppercase mr-2">${res.catName}</span>` : '';
+                        const ansStr = res.aText ? res.aText.map(formatFraction).join(' , ') : '';
+
+                        div.innerHTML = `
+                            <div class="flex items-center">
+                                ${catBadge}
+                                <span class="text-xs text-primary font-bold">${res.folderName}</span>
+                            </div>
+                            <div class="text-sm leading-relaxed truncate text-white mt-1">Q: ${formatFraction(res.qText)}</div>
+                            <div class="text-xs text-accent font-mono truncate">A: ${ansStr}</div>
+                        `;
+                        div.onclick = () => {
+                            resultsDiv.classList.add('hidden');
+                            getEl('global-search-input').value = '';
+                            openEditor(res.folderId);
+                        };
+                        resultsDiv.appendChild(div);
+                    });
+                }
+                resultsDiv.classList.remove('hidden');
+            }, 250);
+        };
+        
+        getEl('global-search-input').addEventListener('input', handleSearch);
+        document.addEventListener('click', (e) => {
+            const input = getEl('global-search-input');
+            const results = getEl('global-search-results');
+            if(!input.contains(e.target) && !results.contains(e.target)) {
+                results.classList.add('hidden');
+            }
+        });
+        
+        getEl('global-search-input').addEventListener('focus', (e) => {
+            if (e.target.value.trim().length > 0) {
+                handleSearch(e);
+            }
+        });
+
+
+        // --- Import / Export ---
+        getEl('btn-export').onclick = () => {
+            const container = getEl('export-tree-container');
+            container.innerHTML = '';
+
+            const renderCatGroup = (catId, catName, catColor) => {
+                const folders = state.folders.filter(f => f.categoryId === catId);
+                if (folders.length === 0) return;
+                
+                const groupDiv = document.createElement('div');
+                groupDiv.innerHTML = `
+                    <div class="flex items-center mb-1 bg-white/5 p-2 rounded-lg hover:bg-white/10 transition-colors">
+                        <button class="btn-toggle-cat text-gray-400 hover:text-white mr-2 transition-transform transform -rotate-90">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <input type="checkbox" id="exp-cat-${catId || 'uncat'}" class="w-4 h-4 mr-3 accent-purple-500 rounded border-white/20 cursor-pointer">
+                        <label for="exp-cat-${catId || 'uncat'}" class="font-bold text-sm text-${catColor || 'gray'}-400 cursor-pointer flex-1 select-none">${catName} <span class="text-xs text-gray-500 font-normal ml-1">(${folders.length} โฟลเดอร์)</span></label>
+                    </div>
+                    <div class="ml-10 space-y-1 mb-2 hidden" id="exp-list-${catId || 'uncat'}"></div>
+                `;
+                container.appendChild(groupDiv);
+                
+                const list = groupDiv.querySelector(`#exp-list-${catId || 'uncat'}`);
+                const catCb = groupDiv.querySelector(`#exp-cat-${catId || 'uncat'}`);
+                const toggleBtn = groupDiv.querySelector('.btn-toggle-cat');
+                const label = groupDiv.querySelector('label');
+                
+                // Toggle expand/collapse
+                const toggleList = () => {
+                    list.classList.toggle('hidden');
+                    if(list.classList.contains('hidden')) {
+                        toggleBtn.classList.add('-rotate-90');
+                    } else {
+                        toggleBtn.classList.remove('-rotate-90');
+                    }
+                };
+                toggleBtn.onclick = toggleList;
+                
+                folders.forEach(f => {
+                    const fDiv = document.createElement('div');
+                    fDiv.innerHTML = `
+                        <label class="flex items-center cursor-pointer hover:bg-white/5 p-1.5 rounded transition-colors select-none">
+                            <input type="checkbox" class="exp-folder-cb w-4 h-4 mr-3 accent-purple-400 rounded border-white/20 cursor-pointer" data-fid="${f.id}" data-catid="${catId || ''}">
+                            <span class="text-sm truncate text-gray-300 flex-1">${f.name}</span>
+                            <span class="text-xs bg-black/80 px-2 py-0.5 rounded text-gray-500">${f.questions.length} Q</span>
+                        </label>
+                    `;
+                    list.appendChild(fDiv);
+                });
+                
+                catCb.addEventListener('change', (e) => {
+                    list.querySelectorAll('.exp-folder-cb').forEach(cb => cb.checked = e.target.checked);
+                });
+                
+                list.addEventListener('change', (e) => {
+                    if(e.target.classList.contains('exp-folder-cb')) {
+                        const allCbs = Array.from(list.querySelectorAll('.exp-folder-cb'));
+                        const checkedCount = allCbs.filter(cb => cb.checked).length;
+                        catCb.checked = checkedCount === allCbs.length && allCbs.length > 0;
+                        catCb.indeterminate = checkedCount > 0 && checkedCount < allCbs.length;
+                    }
+                });
+            };
+
+            state.categories.forEach(c => renderCatGroup(c.id, c.name, c.color));
+            renderCatGroup(null, 'ไม่มีหมวดหมู่', 'gray');
+            
+            showModal('export-modal');
+        };
+
+        const downloadJSON = (data, filename) => {
+            const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        };
+
+        getEl('btn-export-all').onclick = () => {
+            downloadJSON({ type: 'all', categories: state.categories, folders: state.folders }, 'DairyPuzzle_AllData.json');
+            hideModal('export-modal');
+        };
+
+        
+
+        getEl('btn-export-selected').onclick = () => {
+            const selectedFolderIds = Array.from(document.querySelectorAll('.exp-folder-cb:checked')).map(cb => cb.dataset.fid);
+            if(selectedFolderIds.length === 0) {
+                alert('กรุณาเลือกโฟลเดอร์อย่างน้อย 1 รายการ');
+                return;
+            }
+            
+            const foldersToExport = state.folders.filter(f => selectedFolderIds.includes(f.id));
+            const neededCatIds = [...new Set(foldersToExport.map(f => f.categoryId).filter(id => id))];
+            const categoriesToExport = state.categories.filter(c => neededCatIds.includes(c.id));
+            
+            downloadJSON({ type: 'selected', categories: categoriesToExport, folders: foldersToExport }, `DairyPuzzle_Export_${new Date().toISOString().split('T')[0]}.json`);
+            hideModal('export-modal');
+        };
+
+        // --- QR Export Logic ---
+        let qrcodeInstance = null;
+
+        const generateQRCloud = async (dataObj, btnElement) => {
+            if (!state.uid || state.isAnonymous) {
+                customAlert("ฟีเจอร์แชร์ข้อมูลผ่าน QR Code Cloud จำเป็นต้องล็อคอินเข้าสู่ระบบก่อนครับ");
+                return;
+            }
+            
+            const originalHTML = btnElement.innerHTML;
+            btnElement.innerHTML = '<div class="flex items-center gap-2"><svg class="animate-spin w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> กำลังสร้าง...</div>';
+            btnElement.disabled = true;
+            
+            try {
+                const jsonStr = JSON.stringify(dataObj);
+                const compressed = LZString.compressToEncodedURIComponent(jsonStr);
+                const shareId = generateId().substring(0, 8);
+                
+                const docRef = doc(db, `artifacts/${firebaseConfig.appId}/qr_shares`, shareId);
+                await setDoc(docRef, {
+                    payload: compressed,
+                    createdAt: Date.now(),
+                    owner: state.uid
+                });
+                
+                const finalData = "DQZ_CLOUD|" + shareId;
+
+                hideModal('export-modal');
+                showModal('qr-display-modal');
+
+                const container = getEl('qrcode-container');
+                container.innerHTML = '';
+                
+                qrcodeInstance = new QRCode(container, {
+                    text: finalData,
+                    width: 256,
+                    height: 256,
+                    colorDark : "#000000",
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.M
+                });
+            } catch (err) {
+                console.error("QR Cloud Upload Error:", err);
+                customAlert("ไม่สามารถสร้าง QR Code ได้ โปรดตรวจสอบการเชื่อมต่ออินเทอร์เน็ต หรือตั้งค่า Firebase Security Rules ให้ถูกต้อง");
+            } finally {
+                btnElement.innerHTML = originalHTML;
+                btnElement.disabled = false;
+            }
+        };
+
+        getEl('btn-export-all-qr').onclick = () => {
+            const dataObj = { type: 'all', categories: state.categories, folders: state.folders };
+            generateQRCloud(dataObj, getEl('btn-export-all-qr'));
+        };
+
+        getEl('btn-export-qr').onclick = () => {
+            const selectedFolderIds = Array.from(document.querySelectorAll('.exp-folder-cb:checked')).map(cb => cb.dataset.fid);
+            if(selectedFolderIds.length === 0) {
+                alert('กรุณาเลือกโฟลเดอร์อย่างน้อย 1 รายการ');
+                return;
+            }
+            const foldersToExport = JSON.parse(JSON.stringify(state.folders.filter(f => selectedFolderIds.includes(f.id))));
+            const neededCatIds = [...new Set(foldersToExport.map(f => f.categoryId).filter(id => id))];
+            const categoriesToExport = state.categories.filter(c => neededCatIds.includes(c.id));
+            
+            const dataObj = { type: 'selected', categories: categoriesToExport, folders: foldersToExport };
+            generateQRCloud(dataObj, getEl('btn-export-qr'));
+        };
+
+        getEl('btn-save-qr').onclick = () => {
+            const canvas = getEl('qrcode-container').querySelector('canvas');
+            if (canvas) {
+                const url = canvas.toDataURL("image/png");
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `DairyPuzzle_QR_${new Date().toISOString().split('T')[0]}.png`;
+                a.click();
+            }
+        };
+
+        
+
+        getEl('btn-import').onclick = () => showModal('import-method-modal');
+        getEl('btn-import-json-method').onclick = () => {
+            hideModal('import-method-modal');
+            getEl('file-import').click();
+        };
+        getEl('file-import').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    let importedFolders = 0;
+                    
+                    const processFolder = async (f) => {
+                        f.id = generateId(); // new id
+                        const existingNames = state.folders.map(x=>x.name);
+                        if(existingNames.includes(f.name)) f.name += " (ซ้ำ)";
+                        f.questions.forEach(q => q.id = generateId());
+                        state.folders.push(f);
+                        await syncToCloud('folder', f);
+                        importedFolders++;
+                    };
+
+                    if(data.type === 'all' || data.type === 'selected') {
+                        // Import cats
+                        const catIdMap = {};
+                        for(let c of data.categories) {
+                            let existingCat = state.categories.find(x => x.name === c.name);
+                            if (existingCat) {
+                                catIdMap[c.id] = existingCat.id;
+                            } else {
+                                const newId = generateId();
+                                catIdMap[c.id] = newId;
+                                state.categories.push({ id: newId, name: c.name, color: c.color });
+                            }
+                        }
+                        await syncToCloud('categories');
+                        for(let f of data.folders) {
+                            if(f.categoryId && catIdMap[f.categoryId]) {
+                                f.categoryId = catIdMap[f.categoryId];
+                            } else {
+                                f.categoryId = null;
+                            }
+                            await processFolder(f);
+                        }
+                    } else if (data.type === 'category') {
+                        const newCat = { id: generateId(), name: data.category.name + " (Import)" };
+                        state.categories.push(newCat);
+                        await syncToCloud('categories');
+                        for(let f of data.folders) {
+                            f.categoryId = newCat.id;
+                            await processFolder(f);
+                        }
+                    } else if (data.type === 'folder' || Array.isArray(data.questions)) {
+                        // old format or single folder
+                        const folder = data.folder || data;
+                        folder.categoryId = null;
+                        await processFolder(folder);
+                    }
+                    
+                    saveToLocal();
+                    renderDatabase();
+                    customAlert(`นำเข้าสำเร็จ! เพิ่ม ${importedFolders} โฟลเดอร์`, "Import Success");
+
+                } catch (err) {
+                    customAlert("ไฟล์ไม่ถูกต้อง หรือเกิดข้อผิดพลาด: " + err.message);
+                }
+                getEl('file-import').value = ''; // reset
+            };
+            reader.readAsText(file);
+        });
+
+        // --- QR Import Logic ---
+        const handleImportDataObj = async (data) => {
+            let importedFolders = 0;
+            
+            const processFolder = async (f) => {
+                f.id = generateId(); // new id
+                const existingNames = state.folders.map(x=>x.name);
+                if(existingNames.includes(f.name)) f.name += " (ซ้ำ)";
+                f.questions.forEach(q => q.id = generateId());
+                state.folders.push(f);
+                await syncToCloud('folder', f);
+                importedFolders++;
+            };
+
+            if(data.type === 'all' || data.type === 'selected') {
+                const catIdMap = {};
+                for(let c of data.categories) {
+                    let existingCat = state.categories.find(x => x.name === c.name);
+                    if (existingCat) {
+                        catIdMap[c.id] = existingCat.id;
+                    } else {
+                        const newId = generateId();
+                        catIdMap[c.id] = newId;
+                        state.categories.push({ id: newId, name: c.name, color: c.color });
+                    }
+                }
+                await syncToCloud('categories');
+                for(let f of data.folders) {
+                    if(f.categoryId && catIdMap[f.categoryId]) {
+                        f.categoryId = catIdMap[f.categoryId];
+                    } else {
+                        f.categoryId = null;
+                    }
+                    await processFolder(f);
+                }
+            } else if (data.type === 'category') {
+                const newCat = { id: generateId(), name: data.category.name + " (Import)" };
+                state.categories.push(newCat);
+                await syncToCloud('categories');
+                for(let f of data.folders) {
+                    f.categoryId = newCat.id;
+                    await processFolder(f);
+                }
+            } else if (data.type === 'folder' || Array.isArray(data.questions)) {
+                const folder = data.folder || data;
+                folder.categoryId = null;
+                await processFolder(folder);
+            }
+            
+            saveToLocal();
+            renderDatabase();
+            customAlert(`นำเข้าสำเร็จ! เพิ่ม ${importedFolders} โฟลเดอร์`, "Import Success");
+        };
+
+        const processQRText = async (text) => {
+            try {
+                if (text.startsWith("DQZ_CLOUD|")) {
+                    const shareId = text.substring(10);
+                    // โหลดจาก Cloud
+                    const docRef = doc(db, `artifacts/${firebaseConfig.appId}/qr_shares`, shareId);
+                    const docSnap = await getDoc(docRef);
+                    if (docSnap.exists()) {
+                        const compressed = docSnap.data().payload;
+                        const jsonStr = LZString.decompressFromEncodedURIComponent(compressed);
+                        if (!jsonStr) throw new Error("Decompression failed");
+                        const dataObj = JSON.parse(jsonStr);
+                        await handleImportDataObj(dataObj);
+                        return true;
+                    } else {
+                        customAlert("ไม่พบข้อมูล QR Code นี้ในระบบ หรือข้อมูลหมดอายุไปแล้ว");
+                        return false;
+                    }
+                } else if (text.startsWith("DQZ|")) {
+                    // รองรับ QR Code แบบเก่า
+                    const compressed = text.substring(4);
+                    const jsonStr = LZString.decompressFromEncodedURIComponent(compressed);
+                    if (!jsonStr) throw new Error("Decompression failed");
+                    const dataObj = JSON.parse(jsonStr);
+                    await handleImportDataObj(dataObj);
+                    return true;
+                } else {
+                    customAlert("QR Code นี้ไม่ใช่ข้อมูลของ Dairy Puzzle Quiz");
+                    return false;
+                }
+            } catch (err) {
+                console.error(err);
+                customAlert("ข้อมูลใน QR Code เสียหาย หรือไม่สามารถโหลดข้อมูลจาก Cloud ได้");
+                return false;
+            }
+        };
+
+        let html5QrcodeScanner = null;
+
+        getEl('btn-import-camera-method').onclick = () => {
+            hideModal('import-method-modal');
+            showModal('qr-scanner-modal');
+            
+            if (!html5QrcodeScanner) {
+                html5QrcodeScanner = new Html5Qrcode("qr-reader");
+            }
+            
+            html5QrcodeScanner.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: { width: 250, height: 250 } },
+                async (decodedText, decodedResult) => {
+                    // Success
+                    html5QrcodeScanner.stop();
+                    hideModal('qr-scanner-modal');
+                    await processQRText(decodedText);
+                },
+                (errorMessage) => {
+                    // Ignore background read errors
+                }
+            ).catch(err => {
+                customAlert("ไม่สามารถเปิดกล้องได้: " + err);
+                hideModal('qr-scanner-modal');
+            });
+        };
+
+        getEl('btn-close-scanner').onclick = () => {
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.stop().catch(console.error);
+            }
+            hideModal('qr-scanner-modal');
+        };
+
+        getEl('btn-import-qrimg-method').onclick = () => {
+            hideModal('import-method-modal');
+            getEl('file-import-qr').click();
+        };
+
+        getEl('file-import-qr').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+            
+            const html5QrCode = new Html5Qrcode("qr-reader"); // dummy container
+            try {
+                const decodedText = await html5QrCode.scanFile(file, true);
+                await processQRText(decodedText);
+            } catch (err) {
+                customAlert("ไม่พบ QR Code ในรูปภาพนี้ หรือรูปภาพไม่ชัดเจน");
+            }
+            getEl('file-import-qr').value = ''; // reset
+        });
+
+        // Also we need to modify the original file-import logic to use handleImportDataObj
+        // We'll replace the inner try catch block of original reader.onload in a next step if needed, but it works standalone right now since the old one is intact.
+
+
+
+        // --- Setup Screen Toggles Logic ---
+        getEl('toggle-no-time').addEventListener('change', (e) => {
+            const input = getEl('setting-time');
+            input.disabled = e.target.checked;
+            input.style.opacity = e.target.checked ? '0.5' : '1';
+            saveSettings();
+        });
+
+        getEl('toggle-all-questions').addEventListener('change', (e) => {
+            const input = getEl('setting-count');
+            input.disabled = e.target.checked;
+            input.style.opacity = e.target.checked ? '0.5' : '1';
+            saveSettings();
+        });
+        
+        getEl('setting-time').addEventListener('input', saveSettings);
+        getEl('setting-count').addEventListener('input', saveSettings);
+        getEl('toggle-swap').addEventListener('change', saveSettings);
+        getEl('toggle-filter').addEventListener('change', saveSettings);
+        getEl('setting-mode').addEventListener('change', saveSettings);
+
+        getEl('answer-input').addEventListener('input', (e) => {
+            getEl('fraction-preview').innerHTML = formatFraction(e.target.innerHTML);
+            
+            const mode = getEl('setting-mode').value;
+            if (mode === 'AUTO' && state.gamePool.length > 0) {
+                const userAns = normalizeString(e.target.innerHTML);
+                const q = state.gamePool[state.currentQIndex];
+                if (q && q.a) {
+                    let matchedIdx = -1;
+                    for(let i=0; i<q.a.length; i++) {
+                        if(!q.answeredCorrectly.includes(i) && normalizeString(String(q.a[i])) === userAns) {
+                            matchedIdx = i; break;
+                        }
+                    }
+                    if(matchedIdx > -1) {
+                        checkAnswer();
+                    }
+                }
+            }
+        });
+
+        // --- Game Engine ---
+        
+        // Ensure startGame is only declared once!
+        window.startGame = () => {
+            // 1. Build Pool
+            let rawPool = [];
+            const useFilter = getEl('toggle-filter').checked;
+            
+            state.folders.filter(f => f.isSelectedForGame).forEach(f => {
+                f.questions.forEach(q => {
+                    if(!useFilter || q.isSelected) {
+                        // Clone to avoid mutating original
+                        // Resolve category name
+                        const cat = state.categories.find(c => c.id === f.categoryId);
+                        rawPool.push({
+                            id: q.id,
+                            q: q.q,
+                            a: [...q.a],
+                            img: q.img || null,
+                            folderName: f.name,
+                            catName: cat ? cat.name : null
+                        });
+                    }
+                });
+            });
+
+            // 1.5. Merge identical questions automatically
+            let pool = [];
+            let qMap = {};
+            rawPool.forEach(item => {
+                const key = item.q.replace(/<[^>]*>/g, '').replace(/[^\p{L}\p{N}]/gu, '').toLowerCase();
+                if(!qMap[key]) {
+                    qMap[key] = item;
+                } else {
+                    // Merge answers and deduplicate identical words
+                    qMap[key].a = [...new Set([...qMap[key].a, ...item.a])];
+                    if (item.img && !qMap[key].img) qMap[key].img = item.img; // keep image if merged
+                }
+            });
+            pool = Object.values(qMap);
+
+            if(pool.length === 0) {
+                customAlert("ไม่พบข้อสอบ กรุณาเปิด Database เพื่อเลือกโฟลเดอร์ หรือเพิ่มข้อสอบใหม่", "MISSION FAILED");
+                return;
+            }
+
+            // 2. Shuffle (Fisher-Yates)
+            for (let i = pool.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [pool[i], pool[j]] = [pool[j], pool[i]];
+            }
+
+            // 3. Apply limits
+            const isAll = getEl('toggle-all-questions').checked;
+            const countStr = getEl('setting-count').value;
+            let targetCount = isAll ? pool.length : parseInt(countStr);
+            if(isNaN(targetCount) || targetCount < 1) targetCount = 5;
+            
+            if(targetCount < pool.length) {
+                pool = pool.slice(0, targetCount);
+            }
+
+            // 4. Apply Swap Q/A
+            const doSwap = getEl('toggle-swap').checked;
+            if(doSwap) {
+                pool = pool.map(q => {
+                    if(Math.random() > 0.5 && q.a.length === 1) { // Only swap if single answer makes sense
+                        return { ...q, q: q.a[0], a: [q.q] };
+                    }
+                    return q;
+                });
+            }
+
+            // 5. Init State
+            state.gamePool = pool;
+            state.initialTotalQ = pool.length;
+            state.currentQIndex = 0;
+            state.score = 0;
+            state.wrongAnswersLog = [];
+            state.answerHistory = [];
+            state.startTime = Date.now();
+            state.isPaused = false; // Fix timer freeze on replay
+            
+            getEl('game-total-q').innerText = state.initialTotalQ;
+            
+            hideModal('pause-modal');
+            getEl('btn-review-back').classList.add('hidden');
+            switchScreen('setup-screen', 'game-screen');
+            switchScreen('summary-screen', 'game-screen');
+            loadQuestion();
+        };
+
+        const loadQuestion = () => {
+            // Exit review mode if active
+            if (state.reviewMode) {
+                state.reviewMode = false;
+                state.reviewIndex = -1;
+                state.savedGameHTML = null;
+                getEl('btn-review-forward').classList.add('hidden');
+                getEl('btn-review-back').style.opacity = '1';
+                getEl('answer-input').setAttribute('contenteditable', 'true');
+                getEl('answer-input').style.opacity = '1';
+            }
+            
+            if(state.currentQIndex >= state.gamePool.length) {
+                finishGame();
+                return;
+            }
+
+            // Reset formatting mode for new question
+            window.formatMode = 'normal';
+            if (typeof updateFormatButtons === 'function') updateFormatButtons();
+
+            const q = state.gamePool[state.currentQIndex];
+            getEl('game-current-q').innerText = Math.min(state.score + 1, state.initialTotalQ);
+            getEl('game-total-q').innerText = state.initialTotalQ;
+            
+            getEl('question-text').innerHTML = formatFraction(q.q.replace(/\n/g, '<br>'));
+            
+            const qImg = getEl('question-image');
+            const qImgContainer = getEl('question-image-container');
+            if (qImg && qImgContainer) {
+                if (q.img) {
+                    qImg.src = q.img;
+                    qImgContainer.classList.remove('hidden');
+                } else {
+                    qImg.src = '';
+                    qImgContainer.classList.add('hidden');
+                }
+            }
+            
+            const inp = getEl('answer-input');
+            inp.innerHTML = '';
+            inp.removeAttribute('disabled'); inp.setAttribute('contenteditable', 'true');
+            inp.focus();
+            getEl('fraction-preview').innerHTML = '';
+            
+            // Reset source flip card
+            const card = getEl('source-flip-card');
+            card.classList.remove('flipped');
+            getEl('source-cat').textContent    = q.catName    || '—';
+            getEl('source-folder').textContent = q.folderName || '—';
+
+            // Clear correct-answer list
+            getEl('correct-answers-list').innerHTML = '';
+
+            // Render answer badges (empty dots initially)
+            const badgesDiv = getEl('answer-badges');
+            badgesDiv.innerHTML = '';
+            q.a.forEach(() => {
+                badgesDiv.innerHTML += `<div class="w-7 h-7 rounded-full border-2 border-dashed border-gray-500 bg-surface/50"></div>`;
+            });
+            q.answeredCorrectly = []; // track correct multi-answers
+
+            // Reset UI
+            getEl('btn-submit').classList.remove('hidden');
+            getEl('btn-skip').classList.remove('hidden');
+            getEl('btn-reveal').classList.remove('hidden');
+            getEl('btn-next').classList.add('hidden');
+
+            getEl('btn-manual-correct').classList.add('hidden');
+            getEl('btn-manual-incorrect').classList.add('hidden');
+            getEl('reveal-area').classList.add('hidden');
+
+            startTimer();
+        };
+
+        const startTimer = () => {
+            clearInterval(state.timerInterval);
+            const isNoTime = getEl('toggle-no-time').checked;
+            const tContainer = getEl('timer-container');
+            
+            if(isNoTime) {
+                tContainer.classList.add('hidden');
+                return;
+            }
+            
+            tContainer.classList.remove('hidden');
+            const totalTime = parseInt(getEl('setting-time').value) || 15;
+            state.timeRemaining = totalTime;
+            
+            const timeDisp = getEl('time-display');
+            const fuse = getEl('fuse-wire');
+            const dynamite = getEl('dynamite-icon');
+            
+            const updateUI = () => {
+                timeDisp.innerText = state.timeRemaining.toFixed(2);
+                const pct = (state.timeRemaining / totalTime) * 100;
+                fuse.style.width = `${pct}%`;
+                
+                if(pct < 20) {
+                    dynamite.classList.add('animate-wiggle');
+                    timeDisp.classList.add('animate-pulse');
+                } else {
+                    dynamite.classList.remove('animate-wiggle');
+                    timeDisp.classList.remove('animate-pulse');
+                }
+            };
+            
+            updateUI();
+            
+            state.timerInterval = setInterval(() => {
+                if(state.isPaused) return;
+                state.timeRemaining -= 0.05; // 50ms interval
+                if(state.timeRemaining <= 0) {
+                    state.timeRemaining = 0;
+                    clearInterval(state.timerInterval);
+                    updateUI();
+                    handleWrongAnswer("TIME'S UP");
+                } else {
+                    updateUI();
+                }
+            }, 50);
+        };
+
+        const stopTimer = () => clearInterval(state.timerInterval);
+
+        const playBombAnim = (type) => {
+            const c = getEl('bomb-anim-container');
+            const el = getEl(type === 'explode' ? 'bomb-explosion' : 'bomb-defuse');
+            el.classList.remove('hidden');
+            el.classList.remove(`animate-${type}`);
+            void el.offsetWidth; // trigger reflow
+            el.classList.add(`animate-${type}`);
+            setTimeout(() => {
+                el.classList.add('hidden');
+            }, 500);
+        };
+
+        const normalizeString = (str) => {
+            if(!str) return '';
+            let s = str.replace(/<br\s*\/?>/gi, '').replace(/<div>/gi, '').replace(/<\/div>/gi, '');
+            s = s.replace(/&nbsp;/gi, '').replace(/[\u200B-\u200D\uFEFF]/g, '');
+            return s.toLowerCase().replace(/\s+/g, '').trim();
+        };
+
+        const checkAnswer = () => {
+            const inp = getEl('answer-input');
+            const q = state.gamePool[state.currentQIndex];
+            const mode = getEl('setting-mode').value;
+
+            if(mode === 'MANUAL') {
+                stopTimer();
+                inp.disabled = true;
+                getEl('btn-submit').classList.add('hidden');
+                getEl('btn-skip').classList.add('hidden');
+                getEl('btn-reveal').classList.add('hidden');
+                
+                getEl('btn-manual-correct').classList.remove('hidden');
+                getEl('btn-manual-incorrect').classList.remove('hidden');
+                showCorrectAnswers(q);
+                return;
+            }
+
+            const userAns = normalizeString(inp.innerHTML);
+            if(!userAns) {
+                const btnSub = getEl('btn-submit');
+                btnSub.classList.remove('animate-bounce', 'text-red-300');
+                void btnSub.offsetWidth; // trigger reflow
+                btnSub.classList.add('animate-bounce', 'text-red-300');
+                setTimeout(() => btnSub.classList.remove('animate-bounce', 'text-red-300'), 500);
+                return;
+            }
+            
+            // Check if userAns matches any correct answer not yet answered
+            let matchedIdx = -1;
+            for(let i=0; i<q.a.length; i++) {
+                if(!q.answeredCorrectly.includes(i) && normalizeString(q.a[i]) === userAns) {
+                    matchedIdx = i; break;
+                }
+            }
+
+            if(matchedIdx > -1) {
+                // Correct match
+                q.answeredCorrectly.push(matchedIdx);
+                inp.innerHTML = ''; getEl('fraction-preview').innerHTML = '';
+                
+                // Show the actual answered text in the correct-answers list
+                const correctList = getEl('correct-answers-list');
+                const li = document.createElement('li');
+                li.innerHTML = `<span class="inline-flex items-center gap-1 px-4 py-1.5 bg-emerald-500/20 text-emerald-400 rounded-full text-sm font-semibold word-font">✓ <span>${formatFraction(q.a[matchedIdx])}</span></span>`;
+                correctList.appendChild(li);
+
+                // Remove one pending-badge dot
+                const badges = getEl('answer-badges');
+                if(badges.firstChild) badges.removeChild(badges.firstChild);
+
+                if(q.answeredCorrectly.length === q.a.length) {
+                    // All answers correct – auto-flip source card
+                    stopTimer();
+                    state.score++;
+                    playBombAnim('defuse');
+                    getEl('btn-review-back').classList.remove('hidden');
+                    state.answerHistory.unshift({ q: q.q, a: q.a, img: q.img, cat: q.catName, folder: q.folderName, status: 'CORRECT', user: userAns });
+                    getEl('source-flip-card').classList.add('flipped');
+                    state.currentQIndex++;
+                    setTimeout(loadQuestion, 900);
+                }
+            } else {
+                // Wrong Match
+                stopTimer();
+                playBombAnim('explode');
+                handleWrongAnswer(inp.innerHTML.trim() || "BLANK");
+            }
+        };
+
+        const handleWrongAnswer = (userWrongInput) => {
+            const q = state.gamePool[state.currentQIndex];
+            state.wrongAnswersLog.push({
+                q: q.q,
+                a: q.a,
+                user: userWrongInput
+            });
+            state.answerHistory.unshift({ q: q.q, a: q.a, img: q.img, cat: q.catName, folder: q.folderName, status: 'WRONG', user: userWrongInput });
+            
+            getEl('answer-input').removeAttribute('contenteditable');
+            getEl('btn-submit').classList.add('hidden');
+            getEl('btn-skip').classList.add('hidden');
+            getEl('btn-reveal').classList.add('hidden');
+            getEl('btn-next').classList.remove('hidden');
+            
+            showCorrectAnswers(q);
+        };
+
+        const showCorrectAnswers = (q) => {
+            const rArea = getEl('reveal-area');
+            const rAns = getEl('reveal-answers');
+            rAns.innerHTML = '';
+            q.a.forEach(ans => {
+                rAns.innerHTML += `<div>${formatFraction(ans)}</div>`;
+            });
+            rArea.classList.remove('hidden');
+        };
+
+        getEl('btn-submit').onclick = checkAnswer;
+        getEl('answer-input').addEventListener('keydown', (e) => {
+            if(e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                checkAnswer();
+            }
+        });
+
+        getEl('btn-skip').onclick = () => {
+            const q = state.gamePool.splice(state.currentQIndex, 1)[0];
+            // Insert back at random future position
+            const remain = state.gamePool.length - state.currentQIndex;
+            const randPos = state.currentQIndex + Math.floor(Math.random() * remain) + 1;
+            state.gamePool.splice(randPos, 0, q);
+            
+            getEl('game-total-q').innerText = state.initialTotalQ;
+            
+            // Don't inc index, load next which is now at current
+            loadQuestion();
+        };
+
+        getEl('btn-reveal').onclick = () => {
+            stopTimer();
+            playBombAnim('explode');
+            
+            const q = state.gamePool[state.currentQIndex];
+            state.wrongAnswersLog.push({
+                q: q.q,
+                a: q.a,
+                user: "REVEALED (ยอมแพ้)"
+            });
+            state.answerHistory.unshift({ q: q.q, a: q.a, img: q.img, cat: q.catName, folder: q.folderName, status: 'WRONG', user: "REVEALED (ยอมแพ้)" });
+            
+            // Loop back (วนกลับมาใหม่)
+            state.gamePool.push(q);
+            getEl('game-total-q').innerText = state.initialTotalQ;
+            
+            // Show answer
+            getEl('answer-input').removeAttribute('contenteditable');
+            getEl('btn-submit').classList.add('hidden');
+            getEl('btn-skip').classList.add('hidden');
+            getEl('btn-reveal').classList.add('hidden');
+            getEl('btn-manual-correct').classList.add('hidden');
+            getEl('btn-manual-incorrect').classList.add('hidden');
+            getEl('btn-next').classList.remove('hidden');
+            
+            showCorrectAnswers(q);
+        };
+
+        // --- Review Mode (in-game back/forward navigation for correct answers) ---
+        state.reviewMode = false;
+        state.reviewIndex = -1; // index into correctHistory (0 = most recent)
+        
+        const enterReviewMode = (index) => {
+            const correctItems = state.answerHistory.filter(h => h.status === 'CORRECT');
+            if (correctItems.length === 0 || index < 0 || index >= correctItems.length) return;
+            
+            state.reviewMode = true;
+            state.reviewIndex = index;
+            
+            const item = correctItems[index];
+            
+            // Save current game UI state if entering review for first time
+            if (!state.savedGameHTML) {
+                state.savedGameHTML = {
+                    questionText: getEl('question-text').innerHTML,
+                    questionImage: getEl('question-image').src || null,
+                    answerInput: getEl('answer-input').innerHTML,
+                    revealHidden: getEl('reveal-area').classList.contains('hidden'),
+                    revealHTML: getEl('reveal-answers').innerHTML,
+                    timerHidden: getEl('timer-container').classList.contains('hidden'),
+                    missionText: getEl('game-current-q').innerText,
+                    fractionPreview: getEl('fraction-preview').innerHTML,
+                    sourceFlipped: getEl('source-flip-card').classList.contains('flipped'),
+                    sourceCat: getEl('source-cat').textContent,
+                    sourceFolder: getEl('source-folder').textContent,
+                    correctListHTML: getEl('correct-answers-list').innerHTML,
+                    badgesHTML: getEl('answer-badges').innerHTML
+                };
+            }
+            
+            // Display the reviewed question in the game UI
+            getEl('question-text').innerHTML = formatFraction(item.q.replace(/\n/g, '<br>'));
+            getEl('game-current-q').innerText = (correctItems.length - index) + ' \u2705';
+            
+            const qImg = getEl('question-image');
+            const qImgContainer = getEl('question-image-container');
+            if (qImg && qImgContainer) {
+                if (item.img) {
+                    qImg.src = item.img;
+                    qImgContainer.classList.remove('hidden');
+                } else {
+                    qImg.src = '';
+                    qImgContainer.classList.add('hidden');
+                }
+            }
+            
+            // Show answers in input area (read-only)
+            getEl('answer-input').innerHTML = item.a.map(a => formatFraction(a)).join(', ');
+            getEl('answer-input').removeAttribute('contenteditable');
+            getEl('answer-input').style.opacity = '0.7';
+            getEl('fraction-preview').innerHTML = '';
+            
+            // Show historical source, force flip, and disable clicking
+            getEl('source-cat').textContent = item.cat || '—';
+            getEl('source-folder').textContent = item.folder || '—';
+            getEl('source-flip-card').classList.add('flipped');
+            getEl('source-flip-card').classList.add('pointer-events-none');
+            
+            // Hide action buttons
+            getEl('btn-submit').classList.add('hidden');
+            getEl('btn-skip').classList.add('hidden');
+            getEl('btn-reveal').classList.add('hidden');
+            getEl('btn-next').classList.add('hidden');
+            getEl('btn-manual-correct').classList.add('hidden');
+            getEl('btn-manual-incorrect').classList.add('hidden');
+            getEl('reveal-area').classList.add('hidden');
+            getEl('timer-container').classList.add('hidden');
+            
+            // Clear badges and correct-answers-list for review
+            getEl('correct-answers-list').innerHTML = '';
+            getEl('answer-badges').innerHTML = '';
+            
+            // Show forward button, manage back button
+            getEl('btn-review-forward').classList.remove('hidden');
+            if (index >= correctItems.length - 1) {
+                getEl('btn-review-back').style.opacity = '0.3';
+            } else {
+                getEl('btn-review-back').style.opacity = '1';
+            }
+        };
+        
+        const exitReviewMode = () => {
+            if (!state.reviewMode || !state.savedGameHTML) return;
+            
+            state.reviewMode = false;
+            state.reviewIndex = -1;
+            const saved = state.savedGameHTML;
+            
+            // Restore game UI
+            getEl('question-text').innerHTML = saved.questionText;
+            if (saved.questionImage) {
+                getEl('question-image').src = saved.questionImage;
+                if(getEl('question-image-container')) getEl('question-image-container').classList.remove('hidden');
+            } else {
+                getEl('question-image').src = '';
+                if(getEl('question-image-container')) getEl('question-image-container').classList.add('hidden');
+            }
+            getEl('answer-input').innerHTML = saved.answerInput;
+            getEl('answer-input').setAttribute('contenteditable', 'true');
+            getEl('answer-input').style.opacity = '1';
+            getEl('game-current-q').innerText = saved.missionText;
+            getEl('fraction-preview').innerHTML = saved.fractionPreview;
+            getEl('correct-answers-list').innerHTML = saved.correctListHTML;
+            getEl('answer-badges').innerHTML = saved.badgesHTML;
+            
+            if (!saved.revealHidden) {
+                getEl('reveal-area').classList.remove('hidden');
+                getEl('reveal-answers').innerHTML = saved.revealHTML;
+            }
+            if (!saved.timerHidden) {
+                getEl('timer-container').classList.remove('hidden');
+            }
+            
+            // Restore source card text and state
+            getEl('source-cat').textContent = saved.sourceCat || '—';
+            getEl('source-folder').textContent = saved.sourceFolder || '—';
+            getEl('source-flip-card').classList.remove('pointer-events-none');
+            getEl('source-flip-card').classList.remove('flipped');
+            if (saved.sourceFlipped) {
+                getEl('source-flip-card').classList.add('flipped');
+            }
+            
+            // Restore buttons based on current game state
+            const q = state.gamePool[state.currentQIndex];
+            if (q) {
+                // Check if we were in the middle of answering
+                if (saved.revealHidden && !getEl('btn-next').classList.contains('hidden-force')) {
+                    getEl('btn-submit').classList.remove('hidden');
+                    getEl('btn-skip').classList.remove('hidden');
+                    getEl('btn-reveal').classList.remove('hidden');
+                }
+            }
+            
+            // Hide forward button
+            getEl('btn-review-forward').classList.add('hidden');
+            getEl('btn-review-back').style.opacity = '1';
+            
+            state.savedGameHTML = null;
+            
+            // Refocus input
+            getEl('answer-input').focus();
+        };
+        
+        getEl('btn-review-back').onclick = () => {
+            const correctItems = state.answerHistory.filter(h => h.status === 'CORRECT');
+            if (correctItems.length === 0) return;
+            
+            if (!state.reviewMode) {
+                // Enter review mode, show most recent correct answer
+                enterReviewMode(0);
+            } else {
+                // Go to older correct answer
+                if (state.reviewIndex < correctItems.length - 1) {
+                    enterReviewMode(state.reviewIndex + 1);
+                }
+            }
+        };
+        
+        getEl('btn-review-forward').onclick = () => {
+            if (!state.reviewMode) return;
+            
+            if (state.reviewIndex <= 0) {
+                // Return to current question
+                exitReviewMode();
+            } else {
+                // Go to newer correct answer
+                enterReviewMode(state.reviewIndex - 1);
+            }
+        };
+
+        getEl('btn-next').onclick = () => {
+            state.currentQIndex++;
+            loadQuestion();
+        };
+
+        getEl('btn-manual-correct').onclick = () => {
+            const q = state.gamePool[state.currentQIndex];
+            state.score++;
+            playBombAnim('defuse');
+            getEl('btn-review-back').classList.remove('hidden');
+            state.answerHistory.unshift({ q: q.q, a: q.a, img: q.img, cat: q.catName, folder: q.folderName, status: 'CORRECT', user: "MANUAL CHECK (ถูก)" });
+            state.currentQIndex++;
+            setTimeout(loadQuestion, 500);
+        };
+
+        getEl('btn-manual-incorrect').onclick = () => {
+            const q = state.gamePool[state.currentQIndex];
+            state.wrongAnswersLog.push({
+                q: q.q,
+                a: q.a,
+                user: "MANUAL CHECK (ผิด)"
+            });
+            state.answerHistory.unshift({ q: q.q, a: q.a, img: q.img, cat: q.catName, folder: q.folderName, status: 'WRONG', user: "MANUAL CHECK (ผิด)" });
+            playBombAnim('explode');
+            
+            // วนข้อกลับมาใหม่ (Loop back to end of pool)
+            state.gamePool.push(q);
+            getEl('game-total-q').innerText = state.initialTotalQ;
+            
+            state.currentQIndex++;
+            setTimeout(loadQuestion, 500);
+        };
+
+        // Flip card toggle
+        window.flipSourceCard = () => {
+            getEl('source-flip-card').classList.toggle('flipped');
+        };
+
+        getEl('btn-pause').onclick = () => {
+            state.isPaused = true;
+            // hide game content visibly to prevent cheating
+            getEl('timer-container').style.opacity = '0.05';
+            getEl('question-text').parentElement.style.opacity = '0.05';
+            getEl('answer-input').style.opacity = '0.05';
+            getEl('reveal-area').style.opacity = '0.05';
+            
+            // Populate history
+            const histList = getEl('pause-history-list');
+            histList.innerHTML = '';
+            if(state.answerHistory.length === 0) {
+                histList.innerHTML = '<div class="text-center text-gray-500 py-4 font-bold">ยังไม่มีข้อมูลการตอบ</div>';
+            } else {
+                state.answerHistory.forEach((item) => {
+                    const isCorrect = item.status === 'CORRECT';
+                    const div = document.createElement('div');
+                    div.className = `p-4 border rounded-xl flex flex-col sm:flex-row sm:justify-between sm:items-center ${isCorrect ? 'bg-emerald-900/10 border-emerald-500/20' : 'bg-red-900/10 border-red-500/20'}`;
+                    div.innerHTML = `
+                        <div>
+                            <div class="text-sm font-bold text-gray-400 mb-1">Q: ${formatFraction(item.q.replace(/\n/g, '<br>'))}</div>
+                            <div class="text-xs ${isCorrect ? 'text-emerald-400' : 'text-red-400'}">คุณตอบ: ${item.user}</div>
+                        </div>
+                        <div class="font-black text-lg ml-4 sm:ml-0 mt-2 sm:mt-0 ${isCorrect ? 'text-emerald-500' : 'text-red-500'}">${isCorrect ? 'ถูกต้อง' : 'ไม่ถูกต้อง'}</div>
+                    `;
+                    histList.appendChild(div);
+                });
+            }
+            getEl('pause-history-section').classList.remove('hidden');
+
+            showModal('pause-modal');
+            getEl('setup-screen').classList.remove('hidden-screen');
+            const headerEl = document.querySelector('header');
+            if (headerEl) headerEl.classList.remove('hidden-screen');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        getEl('btn-resume').onclick = () => {
+            getEl('pause-history-section').classList.add('hidden');
+            hideModal('pause-modal');
+            getEl('setup-screen').classList.add('hidden-screen');
+            const headerEl = document.querySelector('header');
+            if (headerEl) headerEl.classList.add('hidden-screen');
+            getEl('timer-container').style.opacity = '1';
+            getEl('question-text').parentElement.style.opacity = '1';
+            getEl('answer-input').style.opacity = '1';
+            if(!getEl('reveal-area').classList.contains('hidden')) getEl('reveal-area').style.opacity = '1';
+            state.isPaused = false;
+        };
+
+        getEl('btn-quit').onclick = () => {
+            getEl('pause-history-section').classList.add('hidden');
+            hideModal('pause-modal');
+            stopTimer();
+            switchScreen('game-screen', 'setup-screen');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        // --- Streak Logic ---
+        window.updateStreakUI = () => {
+            if(!state.streak) return;
+            
+            const streakCountEl = getEl('streak-count');
+            const streakBtn = getEl('streak-btn');
+            const streakIcon = getEl('streak-icon');
+            const streakWarning = getEl('streak-warning');
+            
+            if(streakCountEl) streakCountEl.innerText = state.streak.current.toLocaleString();
+            
+            const todayStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD local time
+            const hasPlayedToday = state.streak.lastPlayedDate === todayStr;
+            
+            if (streakBtn && streakIcon && streakWarning) {
+                if (hasPlayedToday) {
+                    streakIcon.classList.remove('grayscale', 'opacity-30');
+                    streakBtn.classList.remove('border-red-500/50', 'shadow-[0_0_15px_rgba(239,68,68,0.2)]');
+                    streakBtn.classList.add('border-orange-500/30');
+                    streakWarning.classList.add('hidden');
+                } else {
+                    streakIcon.classList.add('grayscale', 'opacity-30');
+                    streakBtn.classList.remove('border-orange-500/30');
+                    streakBtn.classList.add('border-red-500/50', 'shadow-[0_0_15px_rgba(239,68,68,0.2)]');
+                    streakWarning.classList.remove('hidden');
+                }
+            }
+        };
+
+        window.showStreakMap = () => {
+            getEl('streak-map-current').innerText = state.streak.current.toLocaleString();
+            getEl('streak-map-max').innerText = state.streak.max.toLocaleString() + " วัน";
+            showModal('streak-map-modal');
+        };
+
+        const checkAndUpdateStreak = () => {
+            const todayStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD local time
+            if (state.streak.lastPlayedDate === todayStr) return; // Already awarded today
+
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayStr = yesterday.toLocaleDateString('en-CA');
+
+            let streakIncreased = false;
+            if (state.streak.lastPlayedDate === yesterdayStr) {
+                state.streak.current += 1;
+                streakIncreased = true;
+            } else {
+                state.streak.current = 1;
+                streakIncreased = true;
+            }
+
+            if (state.streak.current > state.streak.max) {
+                state.streak.max = state.streak.current;
+            }
+            state.streak.lastPlayedDate = todayStr;
+            
+            saveToLocal();
+            syncToCloud('streak');
+            updateStreakUI();
+
+            if (streakIncreased) {
+                setTimeout(() => {
+                    getEl('celeb-streak-count').innerText = state.streak.current.toLocaleString();
+                    showModal('streak-celebration-modal');
+                }, 500); // Small delay to let summary screen show first
+            }
+        };
+
+        const finishGame = () => {
+            const totalElapsed = (Date.now() - state.startTime) / 1000;
+            const mode = getEl('setting-mode').value;
+            
+            getEl('summary-score').innerText = state.score;
+            getEl('summary-time').innerText = totalElapsed.toFixed(1) + 's';
+            getEl('summary-wrong').innerText = state.wrongAnswersLog.length;
+            
+            const scoreCont = getEl('score-container');
+            if(mode === 'MANUAL') scoreCont.classList.add('hidden');
+            else scoreCont.classList.remove('hidden');
+
+            const list = getEl('wrong-answers-list');
+            list.innerHTML = '';
+            
+            if(state.wrongAnswersLog.length === 0) {
+                getEl('perfect-score-msg').classList.remove('hidden');
+            } else {
+                getEl('perfect-score-msg').classList.add('hidden');
+                state.wrongAnswersLog.forEach((w, i) => {
+                    const div = document.createElement('div');
+                    div.className = 'p-4 bg-red-900/10 border border-red-500/20 rounded-xl';
+                    div.innerHTML = `
+                        <div class="text-sm font-bold text-gray-400 mb-2">Q${i+1}: ${formatFraction(w.q.replace(/\n/g, '<br>'))}</div>
+                        <div class="text-red-400 text-sm mb-1 line-through opacity-70">พิมพ์มา: ${w.user}</div>
+                        <div class="text-emerald-400 font-bold font-mono">เฉลย: ${w.a.map(formatFraction).join(' , ')}</div>
+                    `;
+                    list.appendChild(div);
+                });
+            }
+
+            switchScreen('game-screen', 'summary-screen');
+            getEl('setup-screen').classList.remove('hidden-screen');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            checkAndUpdateStreak();
+        };
+
+        // --- Event Listeners Init ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Image Input Handling
+            const imgInput = getEl('edit-img-input');
+            const imgPreviewContainer = getEl('edit-img-preview-container');
+            const imgPreview = getEl('edit-img-preview');
+            const btnRemoveImg = getEl('btn-remove-img');
+
+            if (imgInput) {
+                imgInput.addEventListener('change', async (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        try {
+                            const base64 = await compressImage(file);
+                            state.editingImage = base64;
+                            imgPreview.src = base64;
+                            imgPreviewContainer.classList.remove('hidden');
+                        } catch (err) {
+                            console.error("Image compression error", err);
+                            customAlert("ไม่สามารถประมวลผลรูปภาพได้");
+                        }
+                    }
+                });
+            }
+
+            if (btnRemoveImg) {
+                btnRemoveImg.addEventListener('click', () => {
+                    state.editingImage = null;
+                    imgPreviewContainer.classList.add('hidden');
+                    imgPreview.src = '';
+                    if (imgInput) imgInput.value = '';
+                });
+            }
+
+            // Modals close button generic
+            document.querySelectorAll('.btn-close-modal').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const target = e.currentTarget.dataset.target;
+                    hideModal(target);
+                    if(target === 'editor-modal') cancelEditMode();
+                });
+            });
+
+            // Setup Screen Buttons
+            getEl('btn-database').addEventListener('click', () => {
+                renderDatabase();
+                showModal('database-modal');
+            });
+
+            getEl('btn-new-folder').addEventListener('click', window.createNewFolder);
+            getEl('btn-new-cat').addEventListener('click', window.createNewCat);
+            
+            getEl('btn-start-game').addEventListener('click', window.startGame);
+
+            getEl('btn-login-google').addEventListener('click', window.loginWithGoogle);
+            getEl('btn-auto-login-google').addEventListener('click', window.loginWithGoogle);
+            getEl('btn-logout').addEventListener('click', window.logout);
+            getEl('btn-auto-login-skip').addEventListener('click', () => hideModal('auto-login-modal'));
+            
+            getEl('user-email').addEventListener('click', () => {
+                if(!state.isAnonymous) window.logout();
+            });
+
+            // Start auth process
+            initAuth();
+        });
+
+    </script>
+</body>
+</html>
