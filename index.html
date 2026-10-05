@@ -3373,11 +3373,22 @@
         // Manual mode keyboard shortcuts
         document.addEventListener('keydown', (e) => {
             if (window.innerWidth < 640) return; // Only for computers (desktop/tablet landscape)
+            if (e.repeat) return; // Prevent holding down key
+
             const btnCorrect = getEl('btn-manual-correct');
             const btnIncorrect = getEl('btn-manual-incorrect');
             
             // Proceed only if the manual review buttons are currently visible on screen
             if (btnCorrect && btnIncorrect && !btnCorrect.classList.contains('hidden') && !btnIncorrect.classList.contains('hidden')) {
+                
+                // If the user just pressed Enter inside answer-input to submit the answer, 
+                // the focus will be on the answer-input, and the exact same Enter keypress will bubble up here.
+                // We MUST ignore this first Enter keypress so it doesn't instantly mark the answer as correct!
+                if (e.target && e.target.id === 'answer-input' && e.key === 'Enter') {
+                    e.target.blur(); // Blur the input so the NEXT Enter keypress will work properly
+                    return;
+                }
+
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     btnCorrect.click();
