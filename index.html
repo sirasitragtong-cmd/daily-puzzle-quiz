@@ -330,7 +330,7 @@
         }
         
         /* Clean pasted styles from external sources */
-        .clean-text *:not(.fraction):not(.fraction *):not(sup):not(sub):not(.text-red-500) {
+        .clean-text *:not(.fraction):not(.fraction *):not(sup):not(sub):not(.text-red-500):not(.game-red-text):not(.game-red-text *) {
             font-family: inherit !important;
             font-size: inherit !important;
             color: inherit !important;
@@ -1412,7 +1412,7 @@
         
         const formatGameText = (text) => {
             if (!text) return text;
-            let formatted = text.replace(/\*([^*]+)\*/g, '<span class="text-red-500 font-bold">$1</span>');
+            let formatted = text.replace(/\*([^*]+)\*/g, '<span class="text-red-500 font-bold game-red-text" style="color: #ef4444 !important;">$1</span>');
             return formatFraction(formatted);
         };
 
