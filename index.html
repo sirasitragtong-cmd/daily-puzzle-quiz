@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dairy Puzzle Quiz</title>
+    <title>Daily Puzzle Quiz</title>
     <!-- App Icons -->
     <link rel="icon" href="icon.png" type="image/png">
     <link rel="apple-touch-icon" href="icon.png">
@@ -421,7 +421,7 @@
         <!-- Header -->
         <header class="flex flex-col md:flex-row justify-between items-center mb-8 glass rounded-2xl p-6 shadow-2xl border-t border-white/10">
             <div>
-                <h1 class="text-3xl md:text-4xl arcade-title mb-2">DAIRY PUZZLE</h1>
+                <h1 class="text-3xl md:text-4xl arcade-title mb-2">DAILY PUZZLE</h1>
                 <p class="text-primary font-arcade text-xs mt-2">Credit by Sirasit Ragtong</p>
             </div>
             <div id="auth-section" class="mt-4 md:mt-0 flex flex-col items-end">
@@ -2400,7 +2400,7 @@
         };
 
         getEl('btn-export-all').onclick = () => {
-            downloadJSON({ type: 'all', categories: state.categories, folders: state.folders }, 'DairyPuzzle_AllData.json');
+            downloadJSON({ type: 'all', categories: state.categories, folders: state.folders }, 'DailyPuzzle_AllData.json');
             hideModal('export-modal');
         };
 
@@ -2417,7 +2417,7 @@
             const neededCatIds = [...new Set(foldersToExport.map(f => f.categoryId).filter(id => id))];
             const categoriesToExport = state.categories.filter(c => neededCatIds.includes(c.id));
             
-            downloadJSON({ type: 'selected', categories: categoriesToExport, folders: foldersToExport }, `DairyPuzzle_Export_${new Date().toISOString().split('T')[0]}.json`);
+            downloadJSON({ type: 'selected', categories: categoriesToExport, folders: foldersToExport }, `DailyPuzzle_Export_${new Date().toISOString().split('T')[0]}.json`);
             hideModal('export-modal');
         };
 
@@ -2496,7 +2496,7 @@
                 const url = canvas.toDataURL("image/png");
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `DairyPuzzle_QR_${new Date().toISOString().split('T')[0]}.png`;
+                a.download = `DailyPuzzle_QR_${new Date().toISOString().split('T')[0]}.png`;
                 a.click();
             }
         };
@@ -2657,7 +2657,7 @@
                     await handleImportDataObj(dataObj);
                     return true;
                 } else {
-                    customAlert("QR Code นี้ไม่ใช่ข้อมูลของ Dairy Puzzle Quiz");
+                    customAlert("QR Code นี้ไม่ใช่ข้อมูลของ Daily Puzzle Quiz");
                     return false;
                 }
             } catch (err) {
