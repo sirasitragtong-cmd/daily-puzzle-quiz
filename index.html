@@ -1403,6 +1403,13 @@
             updateFormatButtons();
         };
 
+        
+        const formatGameText = (text) => {
+            if (!text) return text;
+            let formatted = text.replace(/\*([^*]+)\*/g, '<span class="text-red-500 font-bold">$1</span>');
+            return formatFraction(formatted);
+        };
+
         window.updateFormatButtons = () => {
             document.querySelectorAll('.format-sup').forEach(btn => btn.classList.toggle('active', window.formatMode === 'superscript'));
             document.querySelectorAll('.format-sub').forEach(btn => btn.classList.toggle('active', window.formatMode === 'subscript'));
