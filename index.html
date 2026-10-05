@@ -656,8 +656,14 @@
                     <button id="btn-skip" class="flex-1 py-3 sm:py-4 arcade-btn arcade-btn-secondary text-sm sm:text-xl md:text-2xl">SKIP</button>
                     <button id="btn-reveal" class="flex-1 py-3 sm:py-4 arcade-btn arcade-btn-danger text-sm sm:text-xl md:text-2xl">REVEAL</button>
                     <button id="btn-next" class="hidden flex-1 py-3 sm:py-4 arcade-btn arcade-btn-accent text-sm sm:text-xl md:text-2xl">NEXT</button>
-                    <button id="btn-manual-correct" class="hidden flex-1 py-3 sm:py-4 arcade-btn bg-emerald-500 hover:bg-emerald-400 text-white border-b-4 border-emerald-700 active:border-b-0 active:translate-y-1 text-sm sm:text-xl md:text-2xl font-black rounded-xl">ถูกต้อง</button>
-                    <button id="btn-manual-incorrect" class="hidden flex-1 py-3 sm:py-4 arcade-btn bg-red-500 hover:bg-red-400 text-white border-b-4 border-red-700 active:border-b-0 active:translate-y-1 text-sm sm:text-xl md:text-2xl font-black rounded-xl">ไม่ถูกต้อง</button>
+                    <button id="btn-manual-correct" class="hidden flex-1 py-3 sm:py-4 arcade-btn bg-emerald-500 hover:bg-emerald-400 text-white border-b-4 border-emerald-700 active:border-b-0 active:translate-y-1 text-sm sm:text-xl md:text-2xl font-black rounded-xl flex flex-col items-center justify-center leading-tight">
+                        <div>ถูกต้อง</div>
+                        <div class="hidden sm:block text-xs md:text-sm font-normal opacity-90 mt-1 tracking-wide">(กด Enter)</div>
+                    </button>
+                    <button id="btn-manual-incorrect" class="hidden flex-1 py-3 sm:py-4 arcade-btn bg-red-500 hover:bg-red-400 text-white border-b-4 border-red-700 active:border-b-0 active:translate-y-1 text-sm sm:text-xl md:text-2xl font-black rounded-xl flex flex-col items-center justify-center leading-tight">
+                        <div>ไม่ถูกต้อง</div>
+                        <div class="hidden sm:block text-xs md:text-sm font-normal opacity-90 mt-1 tracking-wide">(กด Space bar)</div>
+                    </button>
                 </div>
             </div>
 
@@ -3362,6 +3368,25 @@
             state.currentQIndex++;
             setTimeout(loadQuestion, 500);
         };
+
+        
+        // Manual mode keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (window.innerWidth < 640) return; // Only for computers (desktop/tablet landscape)
+            const btnCorrect = getEl('btn-manual-correct');
+            const btnIncorrect = getEl('btn-manual-incorrect');
+            
+            // Proceed only if the manual review buttons are currently visible on screen
+            if (btnCorrect && btnIncorrect && !btnCorrect.classList.contains('hidden') && !btnIncorrect.classList.contains('hidden')) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    btnCorrect.click();
+                } else if (e.code === 'Space' || e.key === ' ') {
+                    e.preventDefault();
+                    btnIncorrect.click();
+                }
+            }
+        });
 
         // Flip card toggle
         window.flipSourceCard = () => {
