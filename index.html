@@ -2885,7 +2885,7 @@
             getEl('game-current-q').innerText = Math.min(state.score + 1, state.initialTotalQ);
             getEl('game-total-q').innerText = state.initialTotalQ;
             
-            getEl('question-text').innerHTML = formatFraction(q.q.replace(/\n/g, '<br>'));
+            getEl('question-text').innerHTML = formatGameText(q.q.replace(/\n/g, '<br>'));
             
             const qImg = getEl('question-image');
             const qImgContainer = getEl('question-image-container');
@@ -3048,7 +3048,7 @@
                 // Show the actual answered text in the correct-answers list
                 const correctList = getEl('correct-answers-list');
                 const li = document.createElement('li');
-                li.innerHTML = `<span class="inline-flex items-center gap-1 px-4 py-1.5 bg-emerald-500/20 text-emerald-400 rounded-full text-sm font-semibold word-font">✓ <span>${formatFraction(q.a[matchedIdx])}</span></span>`;
+                li.innerHTML = `<span class="inline-flex items-center gap-1 px-4 py-1.5 bg-emerald-500/20 text-emerald-400 rounded-full text-sm font-semibold word-font">✓ <span>${formatGameText(q.a[matchedIdx])}</span></span>`;
                 correctList.appendChild(li);
 
                 // Remove one pending-badge dot
@@ -3097,7 +3097,7 @@
             const rAns = getEl('reveal-answers');
             rAns.innerHTML = '';
             q.a.forEach(ans => {
-                rAns.innerHTML += `<div>${formatFraction(ans)}</div>`;
+                rAns.innerHTML += `<div>${formatGameText(ans)}</div>`;
             });
             rArea.classList.remove('hidden');
         };
@@ -3184,7 +3184,7 @@
             }
             
             // Display the reviewed question in the game UI
-            getEl('question-text').innerHTML = formatFraction(item.q.replace(/\n/g, '<br>'));
+            getEl('question-text').innerHTML = formatGameText(item.q.replace(/\n/g, '<br>'));
             getEl('game-current-q').innerText = (correctItems.length - index) + ' \u2705';
             
             const qImg = getEl('question-image');
@@ -3200,7 +3200,7 @@
             }
             
             // Show answers in input area (read-only)
-            getEl('answer-input').innerHTML = item.a.map(a => formatFraction(a)).join(', ');
+            getEl('answer-input').innerHTML = item.a.map(a => formatGameText(a)).join(', ');
             getEl('answer-input').removeAttribute('contenteditable');
             getEl('answer-input').style.opacity = '0.7';
             getEl('fraction-preview').innerHTML = '';
@@ -3381,7 +3381,7 @@
                     div.className = `p-4 border rounded-xl flex flex-col sm:flex-row sm:justify-between sm:items-center ${isCorrect ? 'bg-emerald-900/10 border-emerald-500/20' : 'bg-red-900/10 border-red-500/20'}`;
                     div.innerHTML = `
                         <div>
-                            <div class="text-sm font-bold text-gray-400 mb-1">Q: ${formatFraction(item.q.replace(/\n/g, '<br>'))}</div>
+                            <div class="text-sm font-bold text-gray-400 mb-1">Q: ${formatGameText(item.q.replace(/\n/g, '<br>'))}</div>
                             <div class="text-xs ${isCorrect ? 'text-emerald-400' : 'text-red-400'}">คุณตอบ: ${item.user}</div>
                         </div>
                         <div class="font-black text-lg ml-4 sm:ml-0 mt-2 sm:mt-0 ${isCorrect ? 'text-emerald-500' : 'text-red-500'}">${isCorrect ? 'ถูกต้อง' : 'ไม่ถูกต้อง'}</div>
@@ -3511,9 +3511,9 @@
                     const div = document.createElement('div');
                     div.className = 'p-4 bg-red-900/10 border border-red-500/20 rounded-xl';
                     div.innerHTML = `
-                        <div class="text-sm font-bold text-gray-400 mb-2">Q${i+1}: ${formatFraction(w.q.replace(/\n/g, '<br>'))}</div>
+                        <div class="text-sm font-bold text-gray-400 mb-2">Q${i+1}: ${formatGameText(w.q.replace(/\n/g, '<br>'))}</div>
                         <div class="text-red-400 text-sm mb-1 line-through opacity-70">พิมพ์มา: ${w.user}</div>
-                        <div class="text-emerald-400 font-bold font-mono">เฉลย: ${w.a.map(formatFraction).join(' , ')}</div>
+                        <div class="text-emerald-400 font-bold font-mono">เฉลย: ${w.a.map(formatGameText).join(' , ')}</div>
                     `;
                     list.appendChild(div);
                 });
