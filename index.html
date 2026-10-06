@@ -756,9 +756,9 @@
                 </div>
 
                 <!-- Body (2 columns) -->
-                <div class="flex-1 flex overflow-hidden flex-col md:flex-row">
+                <div class="flex-1 flex overflow-hidden flex-col md:flex-row" id="database-layout-container">
                     <!-- Left: Uncategorized -->
-                    <div class="w-full md:w-1/3 border-r border-white/10 p-6 flex flex-col bg-black/10">
+                    <div id="database-uncat-area" class="w-full md:w-1/3 border-r border-white/10 p-6 flex flex-col bg-black/10 flex-shrink-0" style="flex: 1 1 33.33%;">
                         <h3 class="font-bold text-gray-400 mb-4 tracking-wider text-sm flex items-center justify-between">
                             <span>UNCATEGORIZED FOLDERS</span>
                             <span class="text-xs bg-white/10 px-2 py-1 rounded" id="uncat-count">0</span>
@@ -767,8 +767,19 @@
                             <!-- Folders go here -->
                         </div>
                     </div>
+                    
+                    <!-- Mobile Resizer (Vertical) -->
+                    <div id="database-resizer-v" class="md:hidden w-full h-8 flex items-center justify-center bg-black/60 border-y border-white/10 cursor-ns-resize active:bg-white/10 touch-none shadow-[0_0_15px_rgba(0,0,0,0.8)] z-10 flex-shrink-0" title="เลื่อนขึ้นลงเพื่อปรับขนาด">
+                        <div class="w-16 h-1.5 bg-gray-400 rounded-full"></div>
+                    </div>
+                    
+                    <!-- Desktop Resizer (Horizontal) -->
+                    <div id="database-resizer-h" class="hidden md:flex w-2 h-full bg-black/40 hover:bg-white/20 active:bg-white/30 cursor-col-resize touch-none z-10 flex-shrink-0 flex-col justify-center items-center group shadow-[0_0_10px_rgba(0,0,0,0.5)]" title="เลื่อนซ้ายขวาเพื่อปรับขนาด">
+                        <div class="h-16 w-0.5 bg-gray-500 rounded-full group-hover:bg-gray-300"></div>
+                    </div>
+
                     <!-- Right: Categories -->
-                    <div class="w-full md:w-2/3 p-6 flex flex-col bg-surface overflow-hidden">
+                    <div id="database-cat-area" class="w-full md:w-2/3 p-6 flex flex-col bg-surface overflow-hidden flex-shrink-0" style="flex: 1 1 66.66%;">
                         <h3 class="font-bold text-gray-400 mb-4 tracking-wider text-sm">CATEGORIES</h3>
                         <div id="categories-list" class="flex-1 overflow-y-scroll space-y-6 pr-2">
                             <!-- Categories go here -->
@@ -844,7 +855,7 @@
 
                 <div class="flex-1 flex flex-col md:flex-row overflow-hidden" id="editor-layout-container">
                     <!-- Form Area -->
-                    <div id="editor-form-area" class="w-full md:w-1/3 border-r border-white/10 p-6 bg-black/20 overflow-y-auto flex-shrink-0" style="flex: 1 1 50%;">
+                    <div id="editor-form-area" class="w-full md:w-1/3 border-r border-white/10 p-6 bg-black/20 overflow-y-auto flex-shrink-0" style="flex: 1 1 33.33%;">
                         <h3 class="font-bold mb-4 flex items-center justify-between" id="editor-form-title">
                             <span class="text-secondary">ADD DATA</span>
                             <button id="btn-cancel-edit" class="hidden text-xs text-gray-400 hover:text-white underline">Cancel Edit</button>
@@ -889,8 +900,13 @@
                         <div class="w-16 h-1.5 bg-gray-400 rounded-full"></div>
                     </div>
                     
+                    <!-- Desktop Resizer -->
+                    <div id="editor-resizer-h" class="hidden md:flex w-2 h-full bg-black/40 hover:bg-white/20 active:bg-white/30 cursor-col-resize touch-none z-10 flex-shrink-0 flex-col justify-center items-center group shadow-[0_0_10px_rgba(0,0,0,0.5)]" title="เลื่อนซ้ายขวาเพื่อปรับขนาด">
+                        <div class="h-16 w-0.5 bg-gray-500 rounded-full group-hover:bg-gray-300"></div>
+                    </div>
+                    
                     <!-- Questions List Area -->
-                    <div id="editor-list-area" class="w-full md:w-2/3 p-6 flex flex-col overflow-hidden flex-shrink-0" style="flex: 1 1 50%;">
+                    <div id="editor-list-area" class="w-full md:w-2/3 p-6 flex flex-col overflow-hidden flex-shrink-0" style="flex: 1 1 66.66%;">
                         <div class="flex justify-between items-center mb-4">
                             <div>
                                 <h3 class="font-bold text-gray-400 tracking-wider text-sm">DATA LIST (<span id="q-count">0</span>)</h3>
@@ -3638,59 +3654,113 @@
             });
 
             
-            // Mobile Resizer Logic
-            const initMobileResizer = () => {
-                const resizer = getEl('mobile-resizer');
-                const formArea = getEl('editor-form-area');
-                const listArea = getEl('editor-list-area');
-                const container = getEl('editor-layout-container');
+            // Generic Resizer Logic for Mobile & Desktop
+            const setupResizer = (resizerId, panel1Id, panel2Id, containerId, isHorizontal) => {
+                const resizer = getEl(resizerId);
+                const panel1 = getEl(panel1Id);
+                const panel2 = getEl(panel2Id);
+                const container = getEl(containerId);
                 let isResizing = false;
 
-                if(!resizer || !formArea || !listArea || !container) return;
+                if(!resizer || !panel1 || !panel2 || !container) return;
 
-                window.addEventListener('resize', () => {
-                    if(window.innerWidth >= 768) {
-                        formArea.style.height = '';
-                        formArea.style.flex = '';
-                        listArea.style.height = '';
-                        listArea.style.flex = '';
-                    } else {
-                        formArea.style.flex = '1 1 50%';
-                        listArea.style.flex = '1 1 50%';
-                        formArea.style.height = '';
-                        listArea.style.height = '';
-                    }
-                });
-
-                resizer.addEventListener('touchstart', (e) => {
+                const startResize = (e) => {
                     isResizing = true;
-                }, {passive: true});
+                    document.body.style.userSelect = 'none';
+                    // Optional: add a class to body to force cursor while dragging
+                    document.body.style.cursor = isHorizontal ? 'col-resize' : 'ns-resize';
+                };
 
-                document.addEventListener('touchmove', (e) => {
+                const doResize = (e) => {
                     if (!isResizing) return;
-                    if(window.innerWidth >= 768) return; // Only run on mobile
                     
-                    const touch = e.touches[0];
+                    let clientX = e.clientX;
+                    let clientY = e.clientY;
+                    if(e.touches && e.touches.length > 0) {
+                        clientX = e.touches[0].clientX;
+                        clientY = e.touches[0].clientY;
+                    } else if (e.type === 'touchmove') {
+                        return; // Handle case where touch finishes
+                    }
+                    
                     const containerRect = container.getBoundingClientRect();
                     
-                    let newHeight = touch.clientY - containerRect.top;
-                    
-                    if (newHeight < 100) newHeight = 100;
-                    if (newHeight > containerRect.height - 100) newHeight = containerRect.height - 100;
-                    
-                    formArea.style.flex = `0 0 ${newHeight}px`;
-                    listArea.style.flex = `1 1 0%`;
-                    
-                    if(e.cancelable) {
-                        e.preventDefault();
+                    if (isHorizontal) {
+                        if(window.innerWidth < 768) return; // Desktop only
+                        let newWidth = clientX - containerRect.left;
+                        if (newWidth < 250) newWidth = 250; 
+                        if (newWidth > containerRect.width - 300) newWidth = containerRect.width - 300;
+                        
+                        panel1.style.flex = `0 0 ${newWidth}px`;
+                        panel2.style.flex = `1 1 0%`;
+                    } else {
+                        if(window.innerWidth >= 768) return; // Mobile only
+                        let newHeight = clientY - containerRect.top;
+                        if (newHeight < 100) newHeight = 100;
+                        if (newHeight > containerRect.height - 100) newHeight = containerRect.height - 100;
+                        
+                        panel1.style.flex = `0 0 ${newHeight}px`;
+                        panel2.style.flex = `1 1 0%`;
                     }
-                }, {passive: false});
+                    
+                    if(e.cancelable) e.preventDefault();
+                };
 
-                document.addEventListener('touchend', () => {
-                    isResizing = false;
+                const stopResize = () => {
+                    if (isResizing) {
+                        isResizing = false;
+                        document.body.style.userSelect = '';
+                        document.body.style.cursor = '';
+                    }
+                };
+
+                resizer.addEventListener('mousedown', startResize);
+                resizer.addEventListener('touchstart', startResize, {passive: true});
+
+                document.addEventListener('mousemove', doResize);
+                document.addEventListener('touchmove', doResize, {passive: false});
+
+                document.addEventListener('mouseup', stopResize);
+                document.addEventListener('touchend', stopResize);
+            };
+
+            const initAllResizers = () => {
+                // Editor Modal
+                setupResizer('mobile-resizer', 'editor-form-area', 'editor-list-area', 'editor-layout-container', false);
+                setupResizer('editor-resizer-h', 'editor-form-area', 'editor-list-area', 'editor-layout-container', true);
+                
+                // Database Modal
+                setupResizer('database-resizer-v', 'database-uncat-area', 'database-cat-area', 'database-layout-container', false);
+                setupResizer('database-resizer-h', 'database-uncat-area', 'database-cat-area', 'database-layout-container', true);
+
+                // Handle window resize resets
+                window.addEventListener('resize', () => {
+                    const editorForm = getEl('editor-form-area');
+                    const editorList = getEl('editor-list-area');
+                    if(editorForm && editorList) {
+                        if(window.innerWidth >= 768) {
+                            editorForm.style.flex = '1 1 33.33%';
+                            editorList.style.flex = '1 1 66.66%';
+                        } else {
+                            editorForm.style.flex = '1 1 50%';
+                            editorList.style.flex = '1 1 50%';
+                        }
+                    }
+                    
+                    const dbUncat = getEl('database-uncat-area');
+                    const dbCat = getEl('database-cat-area');
+                    if(dbUncat && dbCat) {
+                        if(window.innerWidth >= 768) {
+                            dbUncat.style.flex = '1 1 33.33%';
+                            dbCat.style.flex = '1 1 66.66%';
+                        } else {
+                            dbUncat.style.flex = '1 1 50%';
+                            dbCat.style.flex = '1 1 50%';
+                        }
+                    }
                 });
             };
-            initMobileResizer();
+            initAllResizers();
 
             // Start auth process
 
