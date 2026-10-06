@@ -3680,27 +3680,71 @@
                         clientX = e.touches[0].clientX;
                         clientY = e.touches[0].clientY;
                     } else if (e.type === 'touchmove') {
-                        return; // Handle case where touch finishes
+                        return;
                     }
                     
                     const containerRect = container.getBoundingClientRect();
                     
                     if (isHorizontal) {
-                        if(window.innerWidth < 768) return; // Desktop only
+                        if(window.innerWidth < 768) return; 
                         let newWidth = clientX - containerRect.left;
                         if (newWidth < 12) newWidth = 12; 
                         if (newWidth > containerRect.width - 24) newWidth = containerRect.width - 24;
                         
                         panel1.style.flex = `0 0 ${newWidth}px`;
                         panel2.style.flex = `1 1 0%`;
+
+                        // Handle padding/opacity to allow complete visual collapse
+                        if (newWidth < 60) {
+                            panel1.style.padding = '0';
+                            panel1.style.opacity = '0';
+                            panel1.style.overflow = 'hidden';
+                        } else {
+                            panel1.style.padding = '';
+                            panel1.style.opacity = '1';
+                            panel1.style.overflow = '';
+                        }
+
+                        let p2Width = containerRect.width - newWidth;
+                        if (p2Width < 80) {
+                            panel2.style.padding = '0';
+                            panel2.style.opacity = '0';
+                            panel2.style.overflow = 'hidden';
+                        } else {
+                            panel2.style.padding = '';
+                            panel2.style.opacity = '1';
+                            panel2.style.overflow = '';
+                        }
+
                     } else {
-                        if(window.innerWidth >= 768) return; // Mobile only
+                        if(window.innerWidth >= 768) return; 
                         let newHeight = clientY - containerRect.top;
                         if (newHeight < 12) newHeight = 12;
                         if (newHeight > containerRect.height - 36) newHeight = containerRect.height - 36;
                         
                         panel1.style.flex = `0 0 ${newHeight}px`;
                         panel2.style.flex = `1 1 0%`;
+
+                        if (newHeight < 60) {
+                            panel1.style.padding = '0';
+                            panel1.style.opacity = '0';
+                            panel1.style.overflow = 'hidden';
+                        } else {
+                            panel1.style.padding = '';
+                            panel1.style.opacity = '1';
+                            panel1.style.overflow = '';
+                        }
+
+                        let p2Height = containerRect.height - newHeight;
+                        if (p2Height < 80) {
+                            panel2.style.padding = '0';
+                            panel2.style.opacity = '0';
+                            panel2.style.overflow = 'hidden';
+                        } else {
+                            panel2.style.padding = '';
+                            panel2.style.opacity = '1';
+                            panel2.style.overflow = '';
+                        }
                     }
                     
                     if(e.cancelable) e.preventDefault();
@@ -3735,9 +3779,18 @@
 
                 // Handle window resize resets
                 window.addEventListener('resize', () => {
+                    const resetStyles = (el) => {
+                        if(!el) return;
+                        el.style.padding = '';
+                        el.style.opacity = '1';
+                        el.style.overflow = '';
+                    };
+
                     const editorForm = getEl('editor-form-area');
                     const editorList = getEl('editor-list-area');
                     if(editorForm && editorList) {
+                        resetStyles(editorForm);
+                        resetStyles(editorList);
                         if(window.innerWidth >= 768) {
                             editorForm.style.flex = '1 1 33.33%';
                             editorList.style.flex = '1 1 66.66%';
@@ -3750,6 +3803,8 @@
                     const dbUncat = getEl('database-uncat-area');
                     const dbCat = getEl('database-cat-area');
                     if(dbUncat && dbCat) {
+                        resetStyles(dbUncat);
+                        resetStyles(dbCat);
                         if(window.innerWidth >= 768) {
                             dbUncat.style.flex = '1 1 33.33%';
                             dbCat.style.flex = '1 1 66.66%';
