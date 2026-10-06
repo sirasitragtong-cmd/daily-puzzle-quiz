@@ -3688,16 +3688,16 @@
                     if (isHorizontal) {
                         if(window.innerWidth < 768) return; // Desktop only
                         let newWidth = clientX - containerRect.left;
-                        if (newWidth < 50) newWidth = 50; 
-                        if (newWidth > containerRect.width - 50) newWidth = containerRect.width - 50;
+                        if (newWidth < 0) newWidth = 0; 
+                        if (newWidth > containerRect.width) newWidth = containerRect.width;
                         
                         panel1.style.flex = `0 0 ${newWidth}px`;
                         panel2.style.flex = `1 1 0%`;
                     } else {
                         if(window.innerWidth >= 768) return; // Mobile only
                         let newHeight = clientY - containerRect.top;
-                        if (newHeight < 60) newHeight = 60;
-                        if (newHeight > containerRect.height - 60) newHeight = containerRect.height - 60;
+                        if (newHeight < 0) newHeight = 0;
+                        if (newHeight > containerRect.height) newHeight = containerRect.height;
                         
                         panel1.style.flex = `0 0 ${newHeight}px`;
                         panel2.style.flex = `1 1 0%`;
