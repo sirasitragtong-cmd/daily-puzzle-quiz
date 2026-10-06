@@ -516,6 +516,13 @@
                         </div>
                     </div>
                     <div class="flex items-center justify-between border-t border-white/10 pt-4">
+                        <h3 class="font-bold text-lg text-accent">สลับโจทย์/คำตอบ (100%)</h3>
+                        <div class="relative inline-block w-12 align-middle select-none transition duration-200 ease-in">
+                            <input type="checkbox" id="toggle-swap-100" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-transform duration-300 z-10"/>
+                            <label for="toggle-swap-100" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-600 cursor-pointer transition-colors duration-300"></label>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between border-t border-white/10 pt-4">
                         <div>
                             <h3 class="font-bold text-lg text-secondary">QUESTION FILTER</h3>
                             <p class="text-[10px] sm:text-xs text-gray-400 mt-1">
@@ -1495,6 +1502,7 @@
                     toggleAllQuestions: getEl('toggle-all-questions').checked,
                     settingCount: getEl('setting-count').value,
                     toggleSwap: getEl('toggle-swap').checked,
+                    toggleSwap100: getEl('toggle-swap-100').checked,
                     toggleFilter: getEl('toggle-filter').checked,
                     settingMode: getEl('setting-mode').value,
                     collapsedCats: state.collapsedCats || {}
@@ -1524,6 +1532,7 @@
                 if (s.settingCount) getEl('setting-count').value = s.settingCount;
                 
                 if (typeof s.toggleSwap === 'boolean') getEl('toggle-swap').checked = s.toggleSwap;
+                if (typeof s.toggleSwap100 === 'boolean') getEl('toggle-swap-100').checked = s.toggleSwap100;
                 if (typeof s.toggleFilter === 'boolean') getEl('toggle-filter').checked = s.toggleFilter;
                 if (s.settingMode) getEl('setting-mode').value = s.settingMode;
                 if (s.collapsedCats) state.collapsedCats = s.collapsedCats;
@@ -2777,7 +2786,14 @@
         
         getEl('setting-time').addEventListener('input', saveSettings);
         getEl('setting-count').addEventListener('input', saveSettings);
-        getEl('toggle-swap').addEventListener('change', saveSettings);
+        getEl('toggle-swap').addEventListener('change', (e) => {
+            if (e.target.checked) getEl('toggle-swap-100').checked = false;
+            saveSettings();
+        });
+        getEl('toggle-swap-100').addEventListener('change', (e) => {
+            if (e.target.checked) getEl('toggle-swap').checked = false;
+            saveSettings();
+        });
         getEl('toggle-filter').addEventListener('change', saveSettings);
         getEl('setting-mode').addEventListener('change', saveSettings);
 
@@ -2865,11 +2881,14 @@
             }
 
             // 4. Apply Swap Q/A
-            const doSwap = getEl('toggle-swap').checked;
-            if(doSwap) {
+            const doSwap50 = getEl('toggle-swap').checked;
+            const doSwap100 = getEl('toggle-swap-100').checked;
+            if(doSwap50 || doSwap100) {
                 pool = pool.map(q => {
-                    if(Math.random() > 0.5 && q.a.length === 1) { // Only swap if single answer makes sense
-                        return { ...q, q: q.a[0], a: [q.q] };
+                    if(q.a.length === 1) { // Only swap if single answer makes sense
+                        if (doSwap100 || Math.random() > 0.5) {
+                            return { ...q, q: q.a[0], a: [q.q] };
+                        }
                     }
                     return q;
                 });
