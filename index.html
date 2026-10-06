@@ -374,7 +374,7 @@
             -ms-user-select: none;
             user-select: none;
         }
-        input, textarea, [contenteditable="true"] {
+        input, textarea, select, [contenteditable="true"] {
             -webkit-user-select: auto;
             -moz-user-select: auto;
             -ms-user-select: auto;
@@ -383,7 +383,7 @@
     </style>
     <script>
         document.addEventListener('contextmenu', e => {
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT' || e.target.isContentEditable) return;
             e.preventDefault();
         });
         document.addEventListener('keydown', e => {
