@@ -2884,14 +2884,27 @@
             const doSwap50 = getEl('toggle-swap').checked;
             const doSwap100 = getEl('toggle-swap-100').checked;
             if(doSwap50 || doSwap100) {
-                pool = pool.map(q => {
-                    if(q.a.length === 1) { // Only swap if single answer makes sense
+                let swappedPool = [];
+                pool.forEach(q => {
+                    if(q.a.length === 1) {
+                        // Single answer: simple swap
                         if (doSwap100 || Math.random() > 0.5) {
-                            return { ...q, q: q.a[0], a: [q.q] };
+                            swappedPool.push({ ...q, q: q.a[0], a: [q.q] });
+                        } else {
+                            swappedPool.push(q);
+                        }
+                    } else {
+                        // Multi-answer: each answer becomes its own question
+                        if (doSwap100 || Math.random() > 0.5) {
+                            q.a.forEach(ans => {
+                                swappedPool.push({ ...q, q: ans, a: [q.q], img: q.img });
+                            });
+                        } else {
+                            swappedPool.push(q);
                         }
                     }
-                    return q;
                 });
+                pool = swappedPool;
             }
 
             // 5. Init State
