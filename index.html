@@ -765,7 +765,7 @@
                 <!-- Body (2 columns) -->
                 <div class="flex-1 flex overflow-hidden flex-col md:flex-row" id="database-layout-container">
                     <!-- Left: Uncategorized -->
-                    <div id="database-uncat-area" class="w-full md:w-1/3 border-r border-white/10 p-6 flex flex-col bg-black/10 flex-shrink-0" >
+                    <div id="database-uncat-area" class="w-full md:w-1/3 border-r border-white/10 p-6 flex flex-col bg-black/10 flex-shrink-0">
                         <h3 class="font-bold text-gray-400 mb-4 tracking-wider text-sm flex items-center justify-between">
                             <span>UNCATEGORIZED FOLDERS</span>
                             <span class="text-xs bg-white/10 px-2 py-1 rounded" id="uncat-count">0</span>
@@ -786,7 +786,7 @@
                     </div>
 
                     <!-- Right: Categories -->
-                    <div id="database-cat-area" class="w-full md:w-2/3 p-6 flex flex-col bg-surface overflow-hidden flex-shrink-0" >
+                    <div id="database-cat-area" class="w-full md:w-2/3 p-6 flex flex-col bg-surface overflow-hidden flex-shrink-0">
                         <h3 class="font-bold text-gray-400 mb-4 tracking-wider text-sm">CATEGORIES</h3>
                         <div id="categories-list" class="flex-1 overflow-y-scroll space-y-6 pr-2">
                             <!-- Categories go here -->
@@ -862,7 +862,7 @@
 
                 <div class="flex-1 flex flex-col md:flex-row overflow-hidden" id="editor-layout-container">
                     <!-- Form Area -->
-                    <div id="editor-form-area" class="w-full md:w-1/3 border-r border-white/10 p-6 bg-black/20 overflow-y-auto flex-shrink-0" >
+                    <div id="editor-form-area" class="w-full md:w-1/3 border-r border-white/10 p-6 bg-black/20 overflow-y-auto flex-shrink-0">
                         <h3 class="font-bold mb-4 flex items-center justify-between" id="editor-form-title">
                             <span class="text-secondary">ADD DATA</span>
                             <button id="btn-cancel-edit" class="hidden text-xs text-gray-400 hover:text-white underline">Cancel Edit</button>
@@ -913,7 +913,7 @@
                     </div>
                     
                     <!-- Questions List Area -->
-                    <div id="editor-list-area" class="w-full md:w-2/3 p-6 flex flex-col overflow-hidden flex-shrink-0" >
+                    <div id="editor-list-area" class="w-full md:w-2/3 p-6 flex flex-col overflow-hidden flex-shrink-0">
                         <div class="flex justify-between items-center mb-4">
                             <div>
                                 <h3 class="font-bold text-gray-400 tracking-wider text-sm">DATA LIST (<span id="q-count">0</span>)</h3>
@@ -3065,8 +3065,9 @@
 
         const normalizeString = (str) => {
             if(!str) return '';
-            let s = str.replace(/<br\s*\/?>/gi, '').replace(/<div>/gi, '').replace(/<\/div>/gi, '');
+            let s = str.replace(/<[^>]*>/g, ''); // Strip ALL HTML tags
             s = s.replace(/&nbsp;/gi, '').replace(/[\u200B-\u200D\uFEFF]/g, '');
+            s = s.replace(/\*/g, ''); // Strip * formatting markers (critical for swap mode)
             return s.toLowerCase().replace(/\s+/g, '').trim();
         };
 
