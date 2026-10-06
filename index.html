@@ -842,9 +842,9 @@
                     </div>
                 </div>
 
-                <div class="flex-1 flex flex-col md:flex-row overflow-hidden">
+                <div class="flex-1 flex flex-col md:flex-row overflow-hidden" id="editor-layout-container">
                     <!-- Form Area -->
-                    <div class="w-full md:w-1/3 border-r border-white/10 p-6 bg-black/20 overflow-y-auto">
+                    <div id="editor-form-area" class="w-full md:w-1/3 border-r border-white/10 p-6 bg-black/20 overflow-y-auto flex-shrink-0" style="flex: 1 1 50%;">
                         <h3 class="font-bold mb-4 flex items-center justify-between" id="editor-form-title">
                             <span class="text-secondary">ADD DATA</span>
                             <button id="btn-cancel-edit" class="hidden text-xs text-gray-400 hover:text-white underline">Cancel Edit</button>
@@ -884,8 +884,13 @@
                         </div>
                     </div>
                     
+                    <!-- Mobile Resizer -->
+                    <div id="mobile-resizer" class="md:hidden w-full h-8 flex items-center justify-center bg-black/60 border-y border-white/10 cursor-ns-resize active:bg-white/10 touch-none shadow-[0_0_15px_rgba(0,0,0,0.8)] z-10 flex-shrink-0" title="เลื่อนขึ้นลงเพื่อปรับขนาด">
+                        <div class="w-16 h-1.5 bg-gray-400 rounded-full"></div>
+                    </div>
+                    
                     <!-- Questions List Area -->
-                    <div class="w-full md:w-2/3 p-6 flex flex-col overflow-hidden">
+                    <div id="editor-list-area" class="w-full md:w-2/3 p-6 flex flex-col overflow-hidden flex-shrink-0" style="flex: 1 1 50%;">
                         <div class="flex justify-between items-center mb-4">
                             <div>
                                 <h3 class="font-bold text-gray-400 tracking-wider text-sm">DATA LIST (<span id="q-count">0</span>)</h3>
@@ -3632,7 +3637,63 @@
                 if(!state.isAnonymous) window.logout();
             });
 
+            
+            // Mobile Resizer Logic
+            const initMobileResizer = () => {
+                const resizer = getEl('mobile-resizer');
+                const formArea = getEl('editor-form-area');
+                const listArea = getEl('editor-list-area');
+                const container = getEl('editor-layout-container');
+                let isResizing = false;
+
+                if(!resizer || !formArea || !listArea || !container) return;
+
+                window.addEventListener('resize', () => {
+                    if(window.innerWidth >= 768) {
+                        formArea.style.height = '';
+                        formArea.style.flex = '';
+                        listArea.style.height = '';
+                        listArea.style.flex = '';
+                    } else {
+                        formArea.style.flex = '1 1 50%';
+                        listArea.style.flex = '1 1 50%';
+                        formArea.style.height = '';
+                        listArea.style.height = '';
+                    }
+                });
+
+                resizer.addEventListener('touchstart', (e) => {
+                    isResizing = true;
+                }, {passive: true});
+
+                document.addEventListener('touchmove', (e) => {
+                    if (!isResizing) return;
+                    if(window.innerWidth >= 768) return; // Only run on mobile
+                    
+                    const touch = e.touches[0];
+                    const containerRect = container.getBoundingClientRect();
+                    
+                    let newHeight = touch.clientY - containerRect.top;
+                    
+                    if (newHeight < 100) newHeight = 100;
+                    if (newHeight > containerRect.height - 100) newHeight = containerRect.height - 100;
+                    
+                    formArea.style.flex = `0 0 ${newHeight}px`;
+                    listArea.style.flex = `1 1 0%`;
+                    
+                    if(e.cancelable) {
+                        e.preventDefault();
+                    }
+                }, {passive: false});
+
+                document.addEventListener('touchend', () => {
+                    isResizing = false;
+                });
+            };
+            initMobileResizer();
+
             // Start auth process
+
             initAuth();
         });
 
