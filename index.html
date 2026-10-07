@@ -1590,6 +1590,7 @@
             
             if(f) {
                 state.folders = f;
+                state.folders.sort((a, b) => (a.order || 0) - (b.order || 0));
                 // Pre-warm imageCache from local storage
                 state.folders.forEach(folder => {
                     folder.questions.forEach(q => {
@@ -1658,6 +1659,9 @@
             state.unsubFolders = onSnapshot(collection(db, `artifacts/${firebaseConfig.appId}/users/${state.uid}/folders`), async (snapshot) => {
                 const folders = [];
                 snapshot.forEach(doc => folders.push(doc.data()));
+                
+                // Sort by order
+                folders.sort((a, b) => (a.order || 0) - (b.order || 0));
                 
                 // Fetch missing cloud images
                 for (const f of folders) {
@@ -1901,11 +1905,29 @@
                     onEnd: function (evt) {
                         const folderId = evt.item.dataset.folderId;
                         const toCatId = evt.to.dataset.catId || null; // null for uncat
-                        const folder = state.folders.find(f => f.id === folderId);
-                        if(folder && folder.categoryId !== toCatId) {
-                            folder.categoryId = toCatId;
-                            saveDataAndSync('folder', folder);
-                        }
+                        
+                        const domElements = Array.from(evt.to.children).filter(el => el.dataset.folderId);
+                        
+                        domElements.forEach((el, index) => {
+                            const f = state.folders.find(x => x.id === el.dataset.folderId);
+                            if(f) {
+                                let changed = false;
+                                if (f.id === folderId && f.categoryId !== toCatId) {
+                                    f.categoryId = toCatId;
+                                    changed = true;
+                                }
+                                if (f.order !== index) {
+                                    f.order = index;
+                                    changed = true;
+                                }
+                                if (changed) {
+                                    saveDataAndSync('folder', f);
+                                }
+                            }
+                        });
+                        
+                        state.folders.sort((a, b) => (a.order || 0) - (b.order || 0));
+                        saveToLocal();
                     },
                 });
             });
@@ -1960,7 +1982,7 @@
         window.createNewFolder = async () => {
             const name = await customPrompt("ชื่อโฟลเดอร์ใหม่:");
             if(name) {
-                const newF = { id: generateId(), name, categoryId: null, questions: [], isSelectedForGame: true };
+                const newF = { id: generateId(), name, categoryId: null, questions: [], isSelectedForGame: true, order: Date.now() };
                 state.folders.push(newF);
                 saveDataAndSync('folder', newF);
                 renderDatabase();
