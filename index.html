@@ -24,7 +24,7 @@
                         bomb: '#ff003c'
                     },
                     fontFamily: {
-                        sans: ['Inter', 'Sarabun', 'sans-serif'],
+                        sans: ['Inter', 'Prompt', 'sans-serif'],
                         mono: ['JetBrains Mono', 'monospace']
                     },
                     animation: {
@@ -65,7 +65,7 @@
         }
     </script>
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&family=Press+Start+2P&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&family=Press+Start+2P&family=Prompt:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- SortableJS -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <!-- QR Code Features -->
@@ -80,7 +80,7 @@
             color: white;
             overflow-x: hidden;
             overscroll-behavior-y: none; /* Prevent bounce scrolling on mobile */
-            font-family: 'Inter', 'Sarabun', sans-serif;
+            font-family: 'Inter', 'Prompt', sans-serif;
             -webkit-font-smoothing: antialiased;
         }
         .hidden-screen {
@@ -1819,19 +1819,28 @@
                 const folderCount = foldersInCat.length;
                 
                 // Cat Header
+                const isAllSelected = folderCount > 0 && foldersInCat.every(f => f.isSelectedForGame);
+                
                 const header = document.createElement('div');
-                header.className = 'p-3 bg-white/5 flex justify-between items-center border-b border-white/5 select-none';
+                header.className = 'p-3 bg-gradient-to-r from-white/10 via-white/5 to-transparent flex justify-between items-center border-b border-white/5 select-none hover:from-white/15 transition-all duration-300';
                 header.innerHTML = `
-                    <div class="font-bold text-secondary flex items-center flex-1 cursor-pointer" data-cat-toggle="${cat.id}">
-                        <svg class="w-4 h-4 mr-2 transition-transform duration-200 ${isCollapsed ? '-rotate-90' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                        ${cat.name}
-                        <span class="ml-2 text-xs bg-white/10 text-gray-400 px-2 py-0.5 rounded-full font-normal ${isCollapsed ? '' : 'hidden'}" data-cat-badge="${cat.id}">${folderCount} folders</span>
+                    <div class="flex items-center gap-2 flex-1">
+                        <div class="flex items-center justify-center p-1.5 rounded-lg hover:bg-white/20 transition-colors" onclick="event.stopPropagation()">
+                            <input type="checkbox" class="custom-checkbox w-5 h-5 rounded border-gray-500 cursor-pointer accent-secondary transition-all" 
+                                ${isAllSelected ? 'checked' : ''} 
+                                onchange="window.toggleCatGameSelection('${cat.id}', this.checked)">
+                        </div>
+                        <div class="font-bold text-secondary flex items-center flex-1 cursor-pointer tracking-wide" data-cat-toggle="${cat.id}">
+                            <svg class="w-4 h-4 mr-1 transition-transform duration-200 ${isCollapsed ? '-rotate-90' : ''} text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            <span class="drop-shadow-md text-base leading-none">${cat.name}</span>
+                            <span class="ml-3 text-[10px] uppercase bg-black/40 text-gray-300 px-2 py-0.5 rounded-md font-semibold border border-white/10 ${isCollapsed ? '' : 'hidden'} flex items-center shadow-inner" data-cat-badge="${cat.id}">${folderCount} items</span>
+                        </div>
                     </div>
-                    <div class="flex gap-1" onclick="event.stopPropagation()">
-                        <button class="p-1 hover:bg-white/10 rounded" onclick="window.moveCat(${index}, -1)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg></button>
-                        <button class="p-1 hover:bg-white/10 rounded" onclick="window.moveCat(${index}, 1)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button>
-                        <button class="p-1 hover:bg-white/10 rounded text-blue-400" onclick="window.renameCat('${cat.id}')"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button>
-                        <button class="p-1 hover:bg-white/10 rounded text-red-400" onclick="window.deleteCat('${cat.id}')"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                    <div class="flex gap-1 opacity-50 hover:opacity-100 transition-opacity duration-300" onclick="event.stopPropagation()">
+                        <button class="p-1.5 hover:bg-white/10 rounded-md transition-colors shadow-sm" onclick="window.moveCat(${index}, -1)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg></button>
+                        <button class="p-1.5 hover:bg-white/10 rounded-md transition-colors shadow-sm" onclick="window.moveCat(${index}, 1)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button>
+                        <button class="p-1.5 hover:bg-blue-500/20 rounded-md text-blue-400 transition-colors shadow-sm" onclick="window.renameCat('${cat.id}')"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button>
+                        <button class="p-1.5 hover:bg-red-500/20 rounded-md text-red-400 transition-colors shadow-sm" onclick="window.deleteCat('${cat.id}')"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
                     </div>
                 `;
                 
@@ -1937,6 +1946,15 @@
                 f.isSelectedForGame = isChecked;
                 saveDataAndSync('folder', f);
             }
+        };
+
+        window.toggleCatGameSelection = (catId, isChecked) => {
+            const foldersInCat = state.folders.filter(f => f.categoryId === catId);
+            foldersInCat.forEach(f => {
+                f.isSelectedForGame = isChecked;
+                saveDataAndSync('folder', f);
+            });
+            renderDatabase(); // Update UI immediately
         };
 
         window.createNewFolder = async () => {
