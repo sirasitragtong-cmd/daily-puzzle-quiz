@@ -1593,7 +1593,7 @@
                 state.folders.sort((a, b) => (a.order || 0) - (b.order || 0));
                 // Pre-warm imageCache from local storage
                 state.folders.forEach(folder => {
-                    folder.questions.forEach(q => {
+                    (folder.questions || []).forEach(q => {
                         if (q.img && q.img.startsWith('data:image')) {
                             const imgId = 'img_' + q.id;
                             imageCache[imgId] = q.img;
@@ -1665,7 +1665,7 @@
                 
                 // Fetch missing cloud images
                 for (const f of folders) {
-                    for (const q of f.questions) {
+                    for (const q of (f.questions || [])) {
                         if (q.img && q.img.startsWith('CLOUD_IMG|')) {
                             const imgId = q.img.split('|')[1];
                             if (imageCache[imgId]) {
