@@ -637,11 +637,8 @@
                     <div id="question-text" class="text-xl sm:text-2xl md:text-4xl word-font font-bold leading-relaxed break-words whitespace-pre-wrap text-center text-white clean-text" style="min-height: 90px; display: flex; align-items: center; justify-content: center;">
                         <!-- Question content -->
                     </div>
-                    <div id="question-image-container" class="hidden relative mt-4 mx-auto max-w-full max-h-64 inline-block group cursor-pointer" onclick="window.openZoomModal(document.getElementById('question-image').src);">
-                        <img id="question-image" class="max-w-full max-h-64 rounded-lg border border-white/20 shadow-lg object-contain">
-                        <div class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-lg">
-                            <svg class="w-12 h-12 text-white drop-shadow-md" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path></svg>
-                        </div>
+                    <div id="question-image-container" class="hidden mt-4 mx-auto max-w-full">
+                        <!-- Question images injected dynamically -->
                     </div>
                 </div>
             </div>
@@ -1023,9 +1020,29 @@
         <!-- Utility Modals -->
         <!-- Image Zoom Modal -->
         <div id="image-zoom-modal" class="modal-container fixed inset-0 z-[110] bg-black/95 flex items-center justify-center opacity-0 pointer-events-none overflow-hidden transition-opacity duration-300" onclick="closeZoomModal()">
-            <button class="absolute top-4 right-4 text-white/50 hover:text-white p-2 rounded-full hover:bg-white/10 transition-colors z-[111]">
+            <!-- Close Button -->
+            <button class="absolute top-4 right-4 text-white/70 hover:text-white p-2.5 rounded-full hover:bg-white/10 transition-colors z-[112]" onclick="event.stopPropagation(); closeZoomModal()" title="ปิด (Esc)">
                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
+
+            <!-- Counter Badge -->
+            <div id="zoom-image-counter" class="hidden absolute top-5 left-1/2 -translate-x-1/2 bg-black/70 backdrop-blur-md px-4 py-1.5 rounded-full text-xs font-bold text-white tracking-wider border border-white/20 z-[112] shadow-lg pointer-events-none select-none">
+                1 / 1
+            </div>
+
+            <!-- Prev Button -->
+            <button id="zoom-prev-btn" class="hidden absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 text-white/80 hover:text-white p-3 sm:p-4 rounded-full bg-black/60 hover:bg-black/90 border border-white/20 transition-all z-[112] shadow-xl hover:scale-110 active:scale-95 cursor-pointer" onclick="event.stopPropagation(); window.zoomPrevImage()" title="รูปก่อนหน้า (←)">
+                <svg class="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
+            </button>
+
+            <!-- Next Button -->
+            <button id="zoom-next-btn" class="hidden absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 text-white/80 hover:text-white p-3 sm:p-4 rounded-full bg-black/60 hover:bg-black/90 border border-white/20 transition-all z-[112] shadow-xl hover:scale-110 active:scale-95 cursor-pointer" onclick="event.stopPropagation(); window.zoomNextImage()" title="รูปถัดไป (→)">
+                <svg class="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg>
+            </button>
+
+            <!-- Bottom Thumbnails / Dots strip -->
+            <div id="zoom-dots-container" class="hidden absolute bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-2 max-w-[90vw] overflow-x-auto bg-black/70 backdrop-blur-md px-3 py-2 rounded-2xl border border-white/20 z-[112] shadow-xl"></div>
+
             <div id="zoomed-image-wrapper" class="w-full h-full flex items-center justify-center touch-none">
                 <img id="zoomed-image" class="max-w-full max-h-full object-contain cursor-grab active:cursor-grabbing transition-transform duration-75 origin-center select-none" draggable="false" onclick="event.stopPropagation()">
             </div>
@@ -1038,6 +1055,8 @@
             let zoomStart = { x: 0, y: 0 };
             let initialDistance = 0;
             let initialScale = 1;
+            let zoomImageList = [];
+            let zoomCurrentIndex = 0;
 
             const zoomImg = document.getElementById('zoomed-image');
             const zoomWrapper = document.getElementById('zoomed-image-wrapper');
@@ -1049,18 +1068,102 @@
                 zoomImg.style.transform = `translate(${zoomPointX}px, ${zoomPointY}px) scale(${zoomScale})`;
             };
 
-            window.openZoomModal = (src) => {
+            const updateZoomModalDisplay = () => {
                 zoomScale = 1;
                 zoomPointX = 0;
                 zoomPointY = 0;
                 applyZoomTransform();
-                zoomImg.src = src;
+
+                const src = zoomImageList[zoomCurrentIndex];
+                if (src) zoomImg.src = src;
+
+                const counter = document.getElementById('zoom-image-counter');
+                const prevBtn = document.getElementById('zoom-prev-btn');
+                const nextBtn = document.getElementById('zoom-next-btn');
+                const dotsContainer = document.getElementById('zoom-dots-container');
+
+                if (zoomImageList.length > 1) {
+                    if (counter) {
+                        counter.innerText = `${zoomCurrentIndex + 1} / ${zoomImageList.length}`;
+                        counter.classList.remove('hidden');
+                    }
+                    if (prevBtn) prevBtn.classList.remove('hidden');
+                    if (nextBtn) nextBtn.classList.remove('hidden');
+                    if (dotsContainer) {
+                        dotsContainer.classList.remove('hidden');
+                        dotsContainer.innerHTML = zoomImageList.map((img, i) => `
+                            <button type="button" class="w-9 h-9 rounded-xl overflow-hidden border-2 transition-all cursor-pointer flex-shrink-0 ${i === zoomCurrentIndex ? 'border-primary ring-2 ring-primary/50 scale-110 shadow-lg' : 'border-white/20 opacity-50 hover:opacity-100 hover:border-white/40'}" onclick="event.stopPropagation(); window.setZoomImageIndex(${i})" title="ดูรูปที่ ${i + 1}">
+                                <img src="${img}" class="w-full h-full object-cover">
+                            </button>
+                        `).join('');
+                    }
+                } else {
+                    if (counter) counter.classList.add('hidden');
+                    if (prevBtn) prevBtn.classList.add('hidden');
+                    if (nextBtn) nextBtn.classList.add('hidden');
+                    if (dotsContainer) {
+                        dotsContainer.classList.add('hidden');
+                        dotsContainer.innerHTML = '';
+                    }
+                }
+            };
+
+            window.openZoomModal = (srcOrList, initialIndex = 0) => {
+                if (Array.isArray(srcOrList)) {
+                    zoomImageList = srcOrList.filter(Boolean);
+                    zoomCurrentIndex = Math.max(0, Math.min(initialIndex || 0, zoomImageList.length - 1));
+                } else if (typeof srcOrList === 'string' && srcOrList) {
+                    zoomImageList = [srcOrList];
+                    zoomCurrentIndex = 0;
+                } else {
+                    zoomImageList = [];
+                    zoomCurrentIndex = 0;
+                }
+
+                if (zoomImageList.length === 0) return;
+
+                updateZoomModalDisplay();
                 document.getElementById('image-zoom-modal').classList.remove('opacity-0', 'pointer-events-none');
+            };
+
+            window.zoomPrevImage = () => {
+                if (zoomImageList.length <= 1) return;
+                zoomCurrentIndex = (zoomCurrentIndex - 1 + zoomImageList.length) % zoomImageList.length;
+                updateZoomModalDisplay();
+            };
+
+            window.zoomNextImage = () => {
+                if (zoomImageList.length <= 1) return;
+                zoomCurrentIndex = (zoomCurrentIndex + 1) % zoomImageList.length;
+                updateZoomModalDisplay();
+            };
+
+            window.setZoomImageIndex = (index) => {
+                if (index >= 0 && index < zoomImageList.length) {
+                    zoomCurrentIndex = index;
+                    updateZoomModalDisplay();
+                }
             };
 
             window.closeZoomModal = () => {
                 document.getElementById('image-zoom-modal').classList.add('opacity-0', 'pointer-events-none');
             };
+
+            window.addEventListener('keydown', (e) => {
+                const modal = document.getElementById('image-zoom-modal');
+                if (!modal || modal.classList.contains('pointer-events-none')) return;
+
+                if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    window.zoomPrevImage();
+                } else if (e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    window.zoomNextImage();
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    window.closeZoomModal();
+                }
+            });
 
             // Mouse Events
             zoomWrapper.onmousedown = (e) => {
@@ -1704,11 +1807,11 @@
                                             imageCache[imgId] = b64;
                                             resolvedImgs.push(b64);
                                         } else {
-                                            resolvedImgs.push(null);
+                                            resolvedImgs.push(imgStr);
                                         }
                                     } catch (e) {
                                         console.error("Failed to load cloud image", e);
-                                        resolvedImgs.push(null);
+                                        resolvedImgs.push(imgStr);
                                     }
                                 }
                             } else if (imgStr) {
@@ -2091,6 +2194,15 @@
             cancelEditMode();
         };
 
+        window.openQuestionImageZoom = (qId, imgIndex) => {
+            const f = state.folders.find(x => x.id === state.editingFolderId);
+            if (!f) return;
+            const q = f.questions.find(x => x.id === qId);
+            if (!q) return;
+            const imgs = (q.imgs && Array.isArray(q.imgs) && q.imgs.length > 0) ? q.imgs : (q.img ? [q.img] : []);
+            window.openZoomModal(imgs, imgIndex);
+        };
+
         const renderQuestionsList = (folder) => {
             const list = getEl('questions-list');
             list.innerHTML = '';
@@ -2120,7 +2232,7 @@
                         <div class="font-bold text-sm mb-1 clean-text flex items-start gap-2">
                             ${(() => {
                                 const qImgs = (q.imgs && Array.isArray(q.imgs) && q.imgs.length > 0) ? q.imgs : (q.img ? [q.img] : []);
-                                return qImgs.length > 0 ? `<div class="flex flex-wrap gap-1 flex-shrink-0">${qImgs.map(src => `<img src="${src}" class="w-8 h-8 object-cover rounded border border-white/20 flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity" onclick="window.openZoomModal(this.src)" title="คลิกดูภาพใหญ่">`).join('')}</div>` : '';
+                                return qImgs.length > 0 ? `<div class="flex flex-wrap gap-1 flex-shrink-0">${qImgs.map((src, i) => `<img src="${src}" class="w-8 h-8 object-cover rounded border border-white/20 flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity" onclick="event.stopPropagation(); window.openQuestionImageZoom('${q.id}', ${i})" title="คลิกดูภาพใหญ่">`).join('')}</div>` : '';
                             })()}
                             <div>${formatFraction(q.q.replace(/\n/g, '<br>'))}</div>
                         </div>
@@ -3008,6 +3120,7 @@
         };
 
         const loadQuestion = () => {
+            if (typeof window.closeZoomModal === 'function') window.closeZoomModal();
             // Exit review mode if active
             if (state.reviewMode) {
                 state.reviewMode = false;
@@ -3037,6 +3150,7 @@
             const qImgContainer = getEl('question-image-container');
             if (qImgContainer) {
                 const imgs = (q.imgs && Array.isArray(q.imgs) && q.imgs.length > 0) ? q.imgs : (q.img ? [q.img] : []);
+                state.currentGameImages = imgs;
                 if (imgs.length === 0) {
                     qImgContainer.classList.add('hidden');
                     qImgContainer.innerHTML = '';
@@ -3044,7 +3158,7 @@
                     qImgContainer.classList.remove('hidden');
                     qImgContainer.className = "relative mt-4 mx-auto max-w-full inline-block group cursor-pointer";
                     qImgContainer.innerHTML = `
-                        <div class="relative inline-block max-w-full" onclick="window.openZoomModal('${imgs[0]}')">
+                        <div class="relative inline-block max-w-full" onclick="event.stopPropagation(); window.openZoomModal(state.currentGameImages, 0)">
                             <img id="question-image" src="${imgs[0]}" class="max-w-full max-h-64 rounded-lg border border-white/20 shadow-lg object-contain hover:border-primary transition-all">
                             <div class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-lg pointer-events-none">
                                 <svg class="w-10 h-10 text-white drop-shadow-md" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path></svg>
@@ -3053,13 +3167,13 @@
                     `;
                 } else {
                     qImgContainer.classList.remove('hidden');
-                    qImgContainer.className = "mt-4 mx-auto max-w-full flex flex-wrap items-center justify-center gap-3";
+                    qImgContainer.className = "mt-4 mx-auto max-w-full flex flex-wrap items-center justify-center gap-4";
                     let html = '';
                     imgs.forEach((src, idx) => {
                         html += `
-                            <div class="relative group cursor-pointer" onclick="window.openZoomModal('${src}')">
-                                <img src="${src}" class="max-h-44 sm:max-h-56 max-w-full rounded-lg border border-white/20 shadow-lg object-contain hover:border-primary transition-all group-hover:scale-[1.02]">
-                                <span class="absolute top-2 left-2 bg-black/70 backdrop-blur-sm text-white/90 text-[10px] font-bold px-2 py-0.5 rounded-md border border-white/10 shadow">#${idx + 1}</span>
+                            <div class="relative group cursor-pointer transition-transform hover:scale-[1.02]" onclick="event.stopPropagation(); window.openZoomModal(state.currentGameImages, ${idx})">
+                                <img src="${src}" class="max-h-44 sm:max-h-56 max-w-full rounded-lg border-2 border-white/20 shadow-lg object-contain hover:border-primary transition-all">
+                                <span class="absolute top-2 left-2 bg-black/80 backdrop-blur-sm text-white text-xs font-bold px-2 py-0.5 rounded-md border border-white/20 shadow">#${idx + 1}</span>
                                 <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-lg pointer-events-none">
                                     <svg class="w-8 h-8 text-white drop-shadow-md" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path></svg>
                                 </div>
@@ -3344,6 +3458,7 @@
                     questionImageContainerHTML: getEl('question-image-container') ? getEl('question-image-container').innerHTML : '',
                     questionImageContainerClass: getEl('question-image-container') ? getEl('question-image-container').className : '',
                     questionImageContainerHidden: getEl('question-image-container') ? getEl('question-image-container').classList.contains('hidden') : true,
+                    currentGameImages: state.currentGameImages ? [...state.currentGameImages] : [],
                     answerInput: getEl('answer-input').innerHTML,
                     revealHidden: getEl('reveal-area').classList.contains('hidden'),
                     revealHTML: getEl('reveal-answers').innerHTML,
@@ -3365,6 +3480,7 @@
             const qImgContainer = getEl('question-image-container');
             if (qImgContainer) {
                 const imgs = (item.imgs && Array.isArray(item.imgs) && item.imgs.length > 0) ? item.imgs : (item.img ? [item.img] : []);
+                state.currentReviewImages = imgs;
                 if (imgs.length === 0) {
                     qImgContainer.classList.add('hidden');
                     qImgContainer.innerHTML = '';
@@ -3372,7 +3488,7 @@
                     qImgContainer.classList.remove('hidden');
                     qImgContainer.className = "relative mt-4 mx-auto max-w-full inline-block group cursor-pointer";
                     qImgContainer.innerHTML = `
-                        <div class="relative inline-block max-w-full" onclick="window.openZoomModal('${imgs[0]}')">
+                        <div class="relative inline-block max-w-full" onclick="event.stopPropagation(); window.openZoomModal(state.currentReviewImages, 0)">
                             <img id="question-image" src="${imgs[0]}" class="max-w-full max-h-64 rounded-lg border border-white/20 shadow-lg object-contain hover:border-primary transition-all">
                             <div class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-lg pointer-events-none">
                                 <svg class="w-10 h-10 text-white drop-shadow-md" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path></svg>
@@ -3381,13 +3497,13 @@
                     `;
                 } else {
                     qImgContainer.classList.remove('hidden');
-                    qImgContainer.className = "mt-4 mx-auto max-w-full flex flex-wrap items-center justify-center gap-3";
+                    qImgContainer.className = "mt-4 mx-auto max-w-full flex flex-wrap items-center justify-center gap-4";
                     let html = '';
                     imgs.forEach((src, idx) => {
                         html += `
-                            <div class="relative group cursor-pointer" onclick="window.openZoomModal('${src}')">
-                                <img src="${src}" class="max-h-44 sm:max-h-56 max-w-full rounded-lg border border-white/20 shadow-lg object-contain hover:border-primary transition-all group-hover:scale-[1.02]">
-                                <span class="absolute top-2 left-2 bg-black/70 backdrop-blur-sm text-white/90 text-[10px] font-bold px-2 py-0.5 rounded-md border border-white/10 shadow">#${idx + 1}</span>
+                            <div class="relative group cursor-pointer transition-transform hover:scale-[1.02]" onclick="event.stopPropagation(); window.openZoomModal(state.currentReviewImages, ${idx})">
+                                <img src="${src}" class="max-h-44 sm:max-h-56 max-w-full rounded-lg border-2 border-white/20 shadow-lg object-contain hover:border-primary transition-all">
+                                <span class="absolute top-2 left-2 bg-black/80 backdrop-blur-sm text-white text-xs font-bold px-2 py-0.5 rounded-md border border-white/20 shadow">#${idx + 1}</span>
                                 <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-lg pointer-events-none">
                                     <svg class="w-8 h-8 text-white drop-shadow-md" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path></svg>
                                 </div>
@@ -3449,6 +3565,9 @@
                 c.className = saved.questionImageContainerClass;
                 if (saved.questionImageContainerHidden) c.classList.add('hidden');
                 else c.classList.remove('hidden');
+            }
+            if (saved.currentGameImages) {
+                state.currentGameImages = saved.currentGameImages;
             }
             getEl('answer-input').innerHTML = saved.answerInput;
             getEl('answer-input').setAttribute('contenteditable', 'true');
