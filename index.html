@@ -880,17 +880,17 @@
                             </div>
                             <!-- Image Upload -->
                             <div class="mt-2">
-                                <label class="block text-xs font-bold text-gray-400 mb-1">IMAGE (OPTIONAL)</label>
-                                <div class="flex items-center gap-2">
-                                    <label class="cursor-pointer bg-white/5 hover:bg-white/10 border border-dashed border-white/20 px-3 py-2 rounded-lg text-xs text-gray-300 transition-colors flex items-center">
-                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                <label class="block text-xs font-bold text-gray-400 mb-1 flex items-center justify-between">
+                                    <span>IMAGE (OPTIONAL) <span id="img-count-badge" class="ml-1 text-[11px] text-secondary font-medium"></span></span>
+                                    <span class="text-[10px] text-gray-400 font-normal">เพิ่มได้หลายรูป</span>
+                                </label>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <label class="cursor-pointer bg-white/5 hover:bg-white/10 active:scale-95 border border-dashed border-white/20 hover:border-secondary px-3 py-2 rounded-lg text-xs text-gray-300 transition-all flex items-center shadow-sm flex-shrink-0">
+                                        <svg class="w-4 h-4 mr-1 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                         เพิ่มรูปภาพ
-                                        <input type="file" id="edit-img-input" accept="image/jpeg, image/png, image/webp" class="hidden">
+                                        <input type="file" id="edit-img-input" accept="image/jpeg, image/png, image/webp" multiple class="hidden">
                                     </label>
-                                    <div id="edit-img-preview-container" class="hidden relative">
-                                        <img id="edit-img-preview" class="h-10 w-10 object-cover rounded border border-white/20 cursor-pointer hover:opacity-80 transition-opacity" onclick="window.openZoomModal(this.src)">
-                                        <button id="btn-remove-img" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] hover:bg-red-600">X</button>
-                                    </div>
+                                    <div id="edit-img-preview-container" class="flex flex-wrap items-center gap-2"></div>
                                 </div>
                             </div>
                             <div id="answers-container" class="space-y-2">
@@ -1276,6 +1276,7 @@
 
         const imageCache = {}; // Cache for cloud images
         const state = {
+            editingImages: [],
             editingImage: null,
             uid: null,
             userEmail: null,
@@ -1558,6 +1559,16 @@
                     else {
                         f.questions.forEach(q => {
                             if (q.id && typeof q.id !== 'string') { q.id = String(q.id); changed = true; }
+                            if (q.img && (!q.imgs || !Array.isArray(q.imgs))) {
+                                q.imgs = [q.img];
+                                changed = true;
+                            } else if (!q.imgs) {
+                                q.imgs = [];
+                            }
+                            if (q.imgs && q.imgs.length > 0 && !q.img) {
+                                q.img = q.imgs[0];
+                                changed = true;
+                            }
                         });
                     }
                 });
@@ -1594,10 +1605,13 @@
                 // Pre-warm imageCache from local storage
                 state.folders.forEach(folder => {
                     (folder.questions || []).forEach(q => {
-                        if (q.img && q.img.startsWith('data:image')) {
-                            const imgId = 'img_' + q.id;
-                            imageCache[imgId] = q.img;
-                        }
+                        const imgs = (q.imgs && Array.isArray(q.imgs)) ? q.imgs : (q.img ? [q.img] : []);
+                        imgs.forEach((imgStr, idx) => {
+                            if (imgStr && imgStr.startsWith('data:image')) {
+                                imageCache['img_' + q.id + '_' + idx] = imgStr;
+                                imageCache['img_' + q.id] = imgStr;
+                            }
+                        });
                     });
                 });
             }
@@ -1616,14 +1630,22 @@
                     const folderCopy = JSON.parse(JSON.stringify(item));
                     const imgPromises = [];
                     
-                    folderCopy.questions.forEach(q => {
-                        if (q.img && q.img.startsWith('data:image')) {
-                            const imgId = 'img_' + q.id;
-                            imageCache[imgId] = q.img; // cache locally
-                            const imgDocRef = doc(db, `artifacts/${firebaseConfig.appId}/users/${state.uid}/images`, imgId);
-                            imgPromises.push(setDoc(imgDocRef, { base64: q.img }));
-                            q.img = 'CLOUD_IMG|' + imgId;
-                        }
+                    (folderCopy.questions || []).forEach(q => {
+                        const imgs = (q.imgs && Array.isArray(q.imgs)) ? q.imgs : (q.img ? [q.img] : []);
+                        const newImgs = [];
+                        imgs.forEach((imgStr, idx) => {
+                            if (imgStr && imgStr.startsWith('data:image')) {
+                                const imgId = 'img_' + q.id + '_' + idx;
+                                imageCache[imgId] = imgStr; // cache locally
+                                const imgDocRef = doc(db, `artifacts/${firebaseConfig.appId}/users/${state.uid}/images`, imgId);
+                                imgPromises.push(setDoc(imgDocRef, { base64: imgStr }));
+                                newImgs.push('CLOUD_IMG|' + imgId);
+                            } else {
+                                newImgs.push(imgStr);
+                            }
+                        });
+                        q.imgs = newImgs;
+                        q.img = newImgs.length > 0 ? newImgs[0] : null;
                     });
                     
                     const docRef = doc(db, `artifacts/${firebaseConfig.appId}/users/${state.uid}/folders`, item.id);
@@ -1666,26 +1688,35 @@
                 // Fetch missing cloud images
                 for (const f of folders) {
                     for (const q of (f.questions || [])) {
-                        if (q.img && q.img.startsWith('CLOUD_IMG|')) {
-                            const imgId = q.img.split('|')[1];
-                            if (imageCache[imgId]) {
-                                q.img = imageCache[imgId];
-                            } else {
-                                try {
-                                    const imgRef = doc(db, `artifacts/${firebaseConfig.appId}/users/${state.uid}/images`, imgId);
-                                    const imgSnap = await getDoc(imgRef);
-                                    if (imgSnap.exists() && imgSnap.data().base64) {
-                                        q.img = imgSnap.data().base64;
-                                        imageCache[imgId] = q.img;
-                                    } else {
-                                        q.img = null;
+                        const imgs = (q.imgs && Array.isArray(q.imgs)) ? q.imgs : (q.img ? [q.img] : []);
+                        const resolvedImgs = [];
+                        for (let imgStr of imgs) {
+                            if (imgStr && imgStr.startsWith('CLOUD_IMG|')) {
+                                const imgId = imgStr.split('|')[1];
+                                if (imageCache[imgId]) {
+                                    resolvedImgs.push(imageCache[imgId]);
+                                } else {
+                                    try {
+                                        const imgRef = doc(db, `artifacts/${firebaseConfig.appId}/users/${state.uid}/images`, imgId);
+                                        const imgSnap = await getDoc(imgRef);
+                                        if (imgSnap.exists() && imgSnap.data().base64) {
+                                            const b64 = imgSnap.data().base64;
+                                            imageCache[imgId] = b64;
+                                            resolvedImgs.push(b64);
+                                        } else {
+                                            resolvedImgs.push(null);
+                                        }
+                                    } catch (e) {
+                                        console.error("Failed to load cloud image", e);
+                                        resolvedImgs.push(null);
                                     }
-                                } catch (e) {
-                                    console.error("Failed to load cloud image", e);
-                                    q.img = null;
                                 }
+                            } else if (imgStr) {
+                                resolvedImgs.push(imgStr);
                             }
                         }
+                        q.imgs = resolvedImgs.filter(x => x !== null);
+                        q.img = q.imgs.length > 0 ? q.imgs[0] : null;
                     }
                 }
                 
@@ -2087,7 +2118,10 @@
                     <div class="flex-1 overflow-hidden">
                         ${isGrouped ? `<div class="text-[10px] text-emerald-400 font-bold mb-1 tracking-wider uppercase">🔗 คำถามซ้ำ (จะถูกรวมอัตโนมัติในเกม)</div>` : ''}
                         <div class="font-bold text-sm mb-1 clean-text flex items-start gap-2">
-                            ${q.img ? `<img src="${q.img}" class="w-8 h-8 object-cover rounded border border-white/20 flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity" onclick="window.openZoomModal(this.src)">` : ''}
+                            ${(() => {
+                                const qImgs = (q.imgs && Array.isArray(q.imgs) && q.imgs.length > 0) ? q.imgs : (q.img ? [q.img] : []);
+                                return qImgs.length > 0 ? `<div class="flex flex-wrap gap-1 flex-shrink-0">${qImgs.map(src => `<img src="${src}" class="w-8 h-8 object-cover rounded border border-white/20 flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity" onclick="window.openZoomModal(this.src)" title="คลิกดูภาพใหญ่">`).join('')}</div>` : '';
+                            })()}
                             <div>${formatFraction(q.q.replace(/\n/g, '<br>'))}</div>
                         </div>
                         <div class="text-xs text-secondary font-mono clean-text">${q.a.join(' , ')}</div>
@@ -2151,10 +2185,10 @@
             getEl('answers-container').innerHTML = '';
             
             // Clear image state
+            state.editingImages = [];
             state.editingImage = null;
-            if (getEl('edit-img-preview-container')) getEl('edit-img-preview-container').classList.add('hidden');
+            if (window.renderEditingImagePreviews) window.renderEditingImagePreviews();
             if (getEl('edit-img-input')) getEl('edit-img-input').value = '';
-            if (getEl('edit-img-preview')) getEl('edit-img-preview').src = '';
 
             addAnswerInput(); // Add one empty
         };
@@ -2178,12 +2212,16 @@
                 return;
             }
 
+            const imgsToSave = [...(state.editingImages || [])];
+            const primaryImgToSave = imgsToSave.length > 0 ? imgsToSave[0] : null;
+
             if(state.editingQuestionId) {
                 // Edit
                 const q = f.questions.find(x => x.id === state.editingQuestionId);
                 q.q = qText;
                 q.a = answers;
-                q.img = state.editingImage || null;
+                q.imgs = imgsToSave;
+                q.img = primaryImgToSave;
             } else {
                 // Add new
                 f.questions.unshift({
@@ -2191,7 +2229,8 @@
                     q: qText,
                     a: answers,
                     isSelected: true,
-                    img: state.editingImage || null
+                    imgs: imgsToSave,
+                    img: primaryImgToSave
                 });
             }
             
@@ -2217,15 +2256,15 @@
             q.a.forEach(ans => addAnswerInput(ans));
             
             // Load image state
-            if (q.img) {
-                state.editingImage = q.img;
-                getEl('edit-img-preview').src = q.img;
-                getEl('edit-img-preview-container').classList.remove('hidden');
+            if (q.imgs && Array.isArray(q.imgs) && q.imgs.length > 0) {
+                state.editingImages = [...q.imgs];
+            } else if (q.img) {
+                state.editingImages = [q.img];
             } else {
-                state.editingImage = null;
-                getEl('edit-img-preview-container').classList.add('hidden');
-                getEl('edit-img-input').value = '';
+                state.editingImages = [];
             }
+            state.editingImage = state.editingImages[0] || null;
+            if (window.renderEditingImagePreviews) window.renderEditingImagePreviews();
 
         };
 
@@ -2604,7 +2643,12 @@
                         f.id = generateId(); // new id
                         const existingNames = state.folders.map(x=>x.name);
                         if(existingNames.includes(f.name)) f.name += " (ซ้ำ)";
-                        f.questions.forEach(q => q.id = generateId());
+                        (f.questions || []).forEach(q => {
+                            q.id = generateId();
+                            if (q.img && (!q.imgs || !Array.isArray(q.imgs))) q.imgs = [q.img];
+                            else if (!q.imgs) q.imgs = [];
+                            if (q.imgs && q.imgs.length > 0 && !q.img) q.img = q.imgs[0];
+                        });
                         state.folders.push(f);
                         await syncToCloud('folder', f);
                         importedFolders++;
@@ -2667,7 +2711,12 @@
                 f.id = generateId(); // new id
                 const existingNames = state.folders.map(x=>x.name);
                 if(existingNames.includes(f.name)) f.name += " (ซ้ำ)";
-                f.questions.forEach(q => q.id = generateId());
+                (f.questions || []).forEach(q => {
+                    q.id = generateId();
+                    if (q.img && (!q.imgs || !Array.isArray(q.imgs))) q.imgs = [q.img];
+                    else if (!q.imgs) q.imgs = [];
+                    if (q.imgs && q.imgs.length > 0 && !q.img) q.img = q.imgs[0];
+                });
                 state.folders.push(f);
                 await syncToCloud('folder', f);
                 importedFolders++;
@@ -2872,11 +2921,13 @@
                         // Clone to avoid mutating original
                         // Resolve category name
                         const cat = state.categories.find(c => c.id === f.categoryId);
+                        const qImgs = (q.imgs && Array.isArray(q.imgs) && q.imgs.length > 0) ? [...q.imgs] : (q.img ? [q.img] : []);
                         rawPool.push({
                             id: q.id,
                             q: q.q,
                             a: [...q.a],
-                            img: q.img || null,
+                            imgs: qImgs,
+                            img: qImgs.length > 0 ? qImgs[0] : null,
                             folderName: f.name,
                             catName: cat ? cat.name : null
                         });
@@ -2894,7 +2945,10 @@
                 } else {
                     // Merge answers and deduplicate identical words
                     qMap[key].a = [...new Set([...qMap[key].a, ...item.a])];
-                    if (item.img && !qMap[key].img) qMap[key].img = item.img; // keep image if merged
+                    const existingImgs = qMap[key].imgs || (qMap[key].img ? [qMap[key].img] : []);
+                    const incomingImgs = item.imgs || (item.img ? [item.img] : []);
+                    qMap[key].imgs = [...new Set([...existingImgs, ...incomingImgs])];
+                    qMap[key].img = qMap[key].imgs.length > 0 ? qMap[key].imgs[0] : null;
                 }
             });
             pool = Object.values(qMap);
@@ -2980,15 +3034,40 @@
             
             getEl('question-text').innerHTML = formatGameText(q.q.replace(/\n/g, '<br>'));
             
-            const qImg = getEl('question-image');
             const qImgContainer = getEl('question-image-container');
-            if (qImg && qImgContainer) {
-                if (q.img) {
-                    qImg.src = q.img;
-                    qImgContainer.classList.remove('hidden');
-                } else {
-                    qImg.src = '';
+            if (qImgContainer) {
+                const imgs = (q.imgs && Array.isArray(q.imgs) && q.imgs.length > 0) ? q.imgs : (q.img ? [q.img] : []);
+                if (imgs.length === 0) {
                     qImgContainer.classList.add('hidden');
+                    qImgContainer.innerHTML = '';
+                } else if (imgs.length === 1) {
+                    qImgContainer.classList.remove('hidden');
+                    qImgContainer.className = "relative mt-4 mx-auto max-w-full inline-block group cursor-pointer";
+                    qImgContainer.innerHTML = `
+                        <div class="relative inline-block max-w-full" onclick="window.openZoomModal('${imgs[0]}')">
+                            <img id="question-image" src="${imgs[0]}" class="max-w-full max-h-64 rounded-lg border border-white/20 shadow-lg object-contain hover:border-primary transition-all">
+                            <div class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-lg pointer-events-none">
+                                <svg class="w-10 h-10 text-white drop-shadow-md" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path></svg>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    qImgContainer.classList.remove('hidden');
+                    qImgContainer.className = "mt-4 mx-auto max-w-full flex flex-wrap items-center justify-center gap-3";
+                    let html = '';
+                    imgs.forEach((src, idx) => {
+                        html += `
+                            <div class="relative group cursor-pointer" onclick="window.openZoomModal('${src}')">
+                                <img src="${src}" class="max-h-44 sm:max-h-56 max-w-full rounded-lg border border-white/20 shadow-lg object-contain hover:border-primary transition-all group-hover:scale-[1.02]">
+                                <span class="absolute top-2 left-2 bg-black/70 backdrop-blur-sm text-white/90 text-[10px] font-bold px-2 py-0.5 rounded-md border border-white/10 shadow">#${idx + 1}</span>
+                                <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-lg pointer-events-none">
+                                    <svg class="w-8 h-8 text-white drop-shadow-md" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path></svg>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    html += `<img id="question-image" src="${imgs[0]}" class="hidden">`;
+                    qImgContainer.innerHTML = html;
                 }
             }
             
@@ -3155,7 +3234,7 @@
                     state.score++;
                     playBombAnim('defuse');
                     getEl('btn-review-back').classList.remove('hidden');
-                    state.answerHistory.unshift({ q: q.q, a: q.a, img: q.img, cat: q.catName, folder: q.folderName, status: 'CORRECT', user: userAns });
+                    state.answerHistory.unshift({ q: q.q, a: q.a, imgs: (q.imgs && q.imgs.length > 0) ? [...q.imgs] : (q.img ? [q.img] : []), img: q.img, cat: q.catName, folder: q.folderName, status: 'CORRECT', user: userAns });
                     getEl('source-flip-card').classList.add('flipped');
                     state.currentQIndex++;
                     setTimeout(loadQuestion, 900);
@@ -3175,7 +3254,7 @@
                 a: q.a,
                 user: userWrongInput
             });
-            state.answerHistory.unshift({ q: q.q, a: q.a, img: q.img, cat: q.catName, folder: q.folderName, status: 'WRONG', user: userWrongInput });
+            state.answerHistory.unshift({ q: q.q, a: q.a, imgs: (q.imgs && q.imgs.length > 0) ? [...q.imgs] : (q.img ? [q.img] : []), img: q.img, cat: q.catName, folder: q.folderName, status: 'WRONG', user: userWrongInput });
             
             getEl('answer-input').removeAttribute('contenteditable');
             getEl('btn-submit').classList.add('hidden');
@@ -3227,7 +3306,7 @@
                 a: q.a,
                 user: "REVEALED (ยอมแพ้)"
             });
-            state.answerHistory.unshift({ q: q.q, a: q.a, img: q.img, cat: q.catName, folder: q.folderName, status: 'WRONG', user: "REVEALED (ยอมแพ้)" });
+            state.answerHistory.unshift({ q: q.q, a: q.a, imgs: (q.imgs && q.imgs.length > 0) ? [...q.imgs] : (q.img ? [q.img] : []), img: q.img, cat: q.catName, folder: q.folderName, status: 'WRONG', user: "REVEALED (ยอมแพ้)" });
             
             // Loop back (วนกลับมาใหม่)
             state.gamePool.push(q);
@@ -3262,7 +3341,9 @@
             if (!state.savedGameHTML) {
                 state.savedGameHTML = {
                     questionText: getEl('question-text').innerHTML,
-                    questionImage: getEl('question-image').src || null,
+                    questionImageContainerHTML: getEl('question-image-container') ? getEl('question-image-container').innerHTML : '',
+                    questionImageContainerClass: getEl('question-image-container') ? getEl('question-image-container').className : '',
+                    questionImageContainerHidden: getEl('question-image-container') ? getEl('question-image-container').classList.contains('hidden') : true,
                     answerInput: getEl('answer-input').innerHTML,
                     revealHidden: getEl('reveal-area').classList.contains('hidden'),
                     revealHTML: getEl('reveal-answers').innerHTML,
@@ -3281,15 +3362,40 @@
             getEl('question-text').innerHTML = formatGameText(item.q.replace(/\n/g, '<br>'));
             getEl('game-current-q').innerText = (correctItems.length - index) + ' \u2705';
             
-            const qImg = getEl('question-image');
             const qImgContainer = getEl('question-image-container');
-            if (qImg && qImgContainer) {
-                if (item.img) {
-                    qImg.src = item.img;
-                    qImgContainer.classList.remove('hidden');
-                } else {
-                    qImg.src = '';
+            if (qImgContainer) {
+                const imgs = (item.imgs && Array.isArray(item.imgs) && item.imgs.length > 0) ? item.imgs : (item.img ? [item.img] : []);
+                if (imgs.length === 0) {
                     qImgContainer.classList.add('hidden');
+                    qImgContainer.innerHTML = '';
+                } else if (imgs.length === 1) {
+                    qImgContainer.classList.remove('hidden');
+                    qImgContainer.className = "relative mt-4 mx-auto max-w-full inline-block group cursor-pointer";
+                    qImgContainer.innerHTML = `
+                        <div class="relative inline-block max-w-full" onclick="window.openZoomModal('${imgs[0]}')">
+                            <img id="question-image" src="${imgs[0]}" class="max-w-full max-h-64 rounded-lg border border-white/20 shadow-lg object-contain hover:border-primary transition-all">
+                            <div class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-lg pointer-events-none">
+                                <svg class="w-10 h-10 text-white drop-shadow-md" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path></svg>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    qImgContainer.classList.remove('hidden');
+                    qImgContainer.className = "mt-4 mx-auto max-w-full flex flex-wrap items-center justify-center gap-3";
+                    let html = '';
+                    imgs.forEach((src, idx) => {
+                        html += `
+                            <div class="relative group cursor-pointer" onclick="window.openZoomModal('${src}')">
+                                <img src="${src}" class="max-h-44 sm:max-h-56 max-w-full rounded-lg border border-white/20 shadow-lg object-contain hover:border-primary transition-all group-hover:scale-[1.02]">
+                                <span class="absolute top-2 left-2 bg-black/70 backdrop-blur-sm text-white/90 text-[10px] font-bold px-2 py-0.5 rounded-md border border-white/10 shadow">#${idx + 1}</span>
+                                <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-lg pointer-events-none">
+                                    <svg class="w-8 h-8 text-white drop-shadow-md" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path></svg>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    html += `<img id="question-image" src="${imgs[0]}" class="hidden">`;
+                    qImgContainer.innerHTML = html;
                 }
             }
             
@@ -3337,12 +3443,12 @@
             
             // Restore game UI
             getEl('question-text').innerHTML = saved.questionText;
-            if (saved.questionImage) {
-                getEl('question-image').src = saved.questionImage;
-                if(getEl('question-image-container')) getEl('question-image-container').classList.remove('hidden');
-            } else {
-                getEl('question-image').src = '';
-                if(getEl('question-image-container')) getEl('question-image-container').classList.add('hidden');
+            if (getEl('question-image-container') && saved.questionImageContainerHTML !== undefined) {
+                const c = getEl('question-image-container');
+                c.innerHTML = saved.questionImageContainerHTML;
+                c.className = saved.questionImageContainerClass;
+                if (saved.questionImageContainerHidden) c.classList.add('hidden');
+                else c.classList.remove('hidden');
             }
             getEl('answer-input').innerHTML = saved.answerInput;
             getEl('answer-input').setAttribute('contenteditable', 'true');
@@ -3427,7 +3533,7 @@
             state.score++;
             playBombAnim('defuse');
             getEl('btn-review-back').classList.remove('hidden');
-            state.answerHistory.unshift({ q: q.q, a: q.a, img: q.img, cat: q.catName, folder: q.folderName, status: 'CORRECT', user: "MANUAL CHECK (ถูก)" });
+            state.answerHistory.unshift({ q: q.q, a: q.a, imgs: (q.imgs && q.imgs.length > 0) ? [...q.imgs] : (q.img ? [q.img] : []), img: q.img, cat: q.catName, folder: q.folderName, status: 'CORRECT', user: "MANUAL CHECK (ถูก)" });
             state.currentQIndex++;
             setTimeout(loadQuestion, 500);
         };
@@ -3439,7 +3545,7 @@
                 a: q.a,
                 user: "MANUAL CHECK (ผิด)"
             });
-            state.answerHistory.unshift({ q: q.q, a: q.a, img: q.img, cat: q.catName, folder: q.folderName, status: 'WRONG', user: "MANUAL CHECK (ผิด)" });
+            state.answerHistory.unshift({ q: q.q, a: q.a, imgs: (q.imgs && q.imgs.length > 0) ? [...q.imgs] : (q.img ? [q.img] : []), img: q.img, cat: q.catName, folder: q.folderName, status: 'WRONG', user: "MANUAL CHECK (ผิด)" });
             playBombAnim('explode');
             
             // วนข้อกลับมาใหม่ (Loop back to end of pool)
@@ -3652,35 +3758,54 @@
 
         // --- Event Listeners Init ---
         document.addEventListener('DOMContentLoaded', () => {
-            // Image Input Handling
-            const imgInput = getEl('edit-img-input');
-            const imgPreviewContainer = getEl('edit-img-preview-container');
-            const imgPreview = getEl('edit-img-preview');
-            const btnRemoveImg = getEl('btn-remove-img');
+            // Image Input Handling & Multiple Images Previews
+            window.renderEditingImagePreviews = () => {
+                const container = getEl('edit-img-preview-container');
+                if (!container) return;
+                container.innerHTML = '';
+                (state.editingImages || []).forEach((img, idx) => {
+                    const item = document.createElement('div');
+                    item.className = 'relative group';
+                    item.innerHTML = `
+                        <img src="${img}" class="h-10 w-10 object-cover rounded border border-white/20 cursor-pointer hover:opacity-80 transition-opacity" onclick="window.openZoomModal(this.src)" title="คลิกดูภาพใหญ่">
+                        <button type="button" class="absolute -top-1.5 -right-1.5 bg-red-500 hover:bg-red-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] font-bold shadow transition-transform active:scale-90" onclick="window.removeEditingImage(${idx})" title="ลบภาพนี้">✕</button>
+                    `;
+                    container.appendChild(item);
+                });
+                const countBadge = getEl('img-count-badge');
+                if (countBadge) {
+                    countBadge.innerText = (state.editingImages && state.editingImages.length > 0) ? `(${state.editingImages.length} รูป)` : '';
+                }
+            };
 
+            window.removeEditingImage = (index) => {
+                if (state.editingImages && state.editingImages.length > index) {
+                    state.editingImages.splice(index, 1);
+                    state.editingImage = state.editingImages[0] || null;
+                    window.renderEditingImagePreviews();
+                }
+            };
+
+            const imgInput = getEl('edit-img-input');
             if (imgInput) {
                 imgInput.addEventListener('change', async (e) => {
-                    const file = e.target.files[0];
-                    if (file) {
+                    const files = Array.from(e.target.files || []);
+                    if (files.length > 0) {
                         try {
-                            const base64 = await compressImage(file);
-                            state.editingImage = base64;
-                            imgPreview.src = base64;
-                            imgPreviewContainer.classList.remove('hidden');
+                            for (const file of files) {
+                                const base64 = await compressImage(file);
+                                if (!state.editingImages) state.editingImages = [];
+                                state.editingImages.push(base64);
+                            }
+                            state.editingImage = state.editingImages[0] || null;
+                            window.renderEditingImagePreviews();
                         } catch (err) {
                             console.error("Image compression error", err);
                             customAlert("ไม่สามารถประมวลผลรูปภาพได้");
+                        } finally {
+                            imgInput.value = '';
                         }
                     }
-                });
-            }
-
-            if (btnRemoveImg) {
-                btnRemoveImg.addEventListener('click', () => {
-                    state.editingImage = null;
-                    imgPreviewContainer.classList.add('hidden');
-                    imgPreview.src = '';
-                    if (imgInput) imgInput.value = '';
                 });
             }
 
