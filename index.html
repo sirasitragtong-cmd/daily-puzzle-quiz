@@ -1847,38 +1847,26 @@
             if (state.unsubFolders) state.unsubFolders();
             if (state.unsubCats) state.unsubCats();
 
-            state.unsubFolders = onSnapshot(collection(db, `artifacts/${firebaseConfig.appId}/users/${state.uid}/folders`), async (snapshot) => {
+            state.unsubFolders = onSnapshot(collection(db, `artifacts/${firebaseConfig.appId}/users/${state.uid}/folders`), (snapshot) => {
                 const folders = [];
-                snapshot.forEach(doc => folders.push(doc.data()));
+                snapshot.forEach(docSnap => folders.push(docSnap.data()));
                 
                 // Sort by order
                 folders.sort((a, b) => (a.order || 0) - (b.order || 0));
                 
-                // Fetch missing cloud images
+                // PHASE 1: Resolve images from cache immediately (no await)
+                // This allows instant rendering with cached images
                 for (const f of folders) {
                     for (const q of (f.questions || [])) {
                         const imgs = (q.imgs && Array.isArray(q.imgs)) ? q.imgs : (q.img ? [q.img] : []);
                         const resolvedImgs = [];
-                        for (let imgStr of imgs) {
+                        for (const imgStr of imgs) {
                             if (imgStr && imgStr.startsWith('CLOUD_IMG|')) {
                                 const imgId = imgStr.split('|')[1];
                                 if (imageCache[imgId]) {
                                     resolvedImgs.push(imageCache[imgId]);
                                 } else {
-                                    try {
-                                        const imgRef = doc(db, `artifacts/${firebaseConfig.appId}/users/${state.uid}/images`, imgId);
-                                        const imgSnap = await getDoc(imgRef);
-                                        if (imgSnap.exists() && imgSnap.data().base64) {
-                                            const b64 = imgSnap.data().base64;
-                                            imageCache[imgId] = b64;
-                                            resolvedImgs.push(b64);
-                                        } else {
-                                            resolvedImgs.push(imgStr);
-                                        }
-                                    } catch (e) {
-                                        console.error("Failed to load cloud image", e);
-                                        resolvedImgs.push(imgStr);
-                                    }
+                                    resolvedImgs.push(imgStr); // Keep placeholder for now
                                 }
                             } else if (imgStr) {
                                 resolvedImgs.push(imgStr);
@@ -1889,11 +1877,63 @@
                     }
                 }
                 
+                // Render immediately with whatever we have (cached or placeholder)
                 state.folders = folders;
                 migrateData();
                 saveToLocal();
                 renderDatabase();
                 if(state.editingFolderId) renderEditor(state.editingFolderId);
+                
+                // PHASE 2: Resolve remaining CLOUD_IMG references in background
+                const unresolvedImages = [];
+                for (const f of folders) {
+                    for (const q of (f.questions || [])) {
+                        (q.imgs || []).forEach((imgStr, idx) => {
+                            if (imgStr && imgStr.startsWith('CLOUD_IMG|')) {
+                                unresolvedImages.push({ folder: f, question: q, imgIndex: idx, imgId: imgStr.split('|')[1] });
+                            }
+                        });
+                    }
+                }
+                
+                if (unresolvedImages.length > 0) {
+                    // Fetch all unresolved images in parallel (non-blocking)
+                    Promise.all(unresolvedImages.map(async (item) => {
+                        try {
+                            const imgRef = doc(db, `artifacts/${firebaseConfig.appId}/users/${state.uid}/images`, item.imgId);
+                            const imgSnap = await getDoc(imgRef);
+                            if (imgSnap.exists() && imgSnap.data().base64) {
+                                const b64 = imgSnap.data().base64;
+                                imageCache[item.imgId] = b64;
+                                return { ...item, resolved: b64 };
+                            }
+                        } catch (e) {
+                            console.error("Failed to load cloud image", item.imgId, e);
+                        }
+                        return { ...item, resolved: null };
+                    })).then(results => {
+                        let anyResolved = false;
+                        for (const r of results) {
+                            if (r.resolved) {
+                                r.question.imgs[r.imgIndex] = r.resolved;
+                                anyResolved = true;
+                            }
+                        }
+                        if (anyResolved) {
+                            // Update q.img to match first resolved image
+                            for (const f of state.folders) {
+                                for (const q of (f.questions || [])) {
+                                    if (q.imgs && q.imgs.length > 0) {
+                                        q.img = q.imgs[0];
+                                    }
+                                }
+                            }
+                            saveToLocal();
+                            renderDatabase();
+                            if(state.editingFolderId) renderEditor(state.editingFolderId);
+                        }
+                    });
+                }
             });
 
             state.unsubCats = onSnapshot(doc(db, `artifacts/${firebaseConfig.appId}/users/${state.uid}/settings`, 'categories'), (docSnap) => {
@@ -1940,7 +1980,13 @@
                     // After auth, load local first for instant UI, then sync
                     await loadFromLocal();
                     loadSettings();
+                    renderDatabase(); // Show cached data IMMEDIATELY for instant UI
                     setupRealtimeCloudSync();
+                    
+                    // Remember last logged-in uid for offline cache isolation
+                    if (!state.isAnonymous) {
+                        localStorage.setItem('dairy_last_uid', state.uid);
+                    }
                     
                     getEl('loading-overlay').style.opacity = '0';
                     setTimeout(() => getEl('loading-overlay').classList.add('hidden-screen'), 500);
@@ -2298,7 +2344,11 @@
                         <div class="font-bold text-sm mb-1 clean-text flex items-start gap-2">
                             ${(() => {
                                 const qImgs = (q.imgs && Array.isArray(q.imgs) && q.imgs.length > 0) ? q.imgs : (q.img ? [q.img] : []);
-                                return qImgs.length > 0 ? `<div class="flex flex-wrap gap-1 flex-shrink-0">${qImgs.map((src, i) => `<img src="${src}" class="w-8 h-8 object-cover rounded border border-white/20 flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity" onclick="event.stopPropagation(); window.openQuestionImageZoom('${q.id}', ${i})" title="คลิกดูภาพใหญ่">`).join('')}</div>` : '';
+                                const displayableImgs = qImgs.filter(src => !src.startsWith('CLOUD_IMG|'));
+                                const pendingCount = qImgs.length - displayableImgs.length;
+                                const imgHtml = displayableImgs.map((src, i) => `<img src="${src}" class="w-8 h-8 object-cover rounded border border-white/20 flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity" onclick="event.stopPropagation(); window.openQuestionImageZoom('${q.id}', ${i})" title="คลิกดูภาพใหญ่">`).join('');
+                                const pendingHtml = pendingCount > 0 ? Array(pendingCount).fill('<div class="w-8 h-8 rounded border border-white/10 bg-white/5 flex-shrink-0 flex items-center justify-center" title="กำลังโหลดรูป..."><svg class="w-4 h-4 text-gray-500 animate-spin" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" class="opacity-25"></circle><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" class="opacity-75"></path></svg></div>').join('') : '';
+                                return (imgHtml || pendingHtml) ? `<div class="flex flex-wrap gap-1 flex-shrink-0">${imgHtml}${pendingHtml}</div>` : '';
                             })()}
                             <div>${formatFraction(q.q.replace(/\n/g, '<br>'))}</div>
                         </div>
@@ -3215,7 +3265,8 @@
             
             const qImgContainer = getEl('question-image-container');
             if (qImgContainer) {
-                const imgs = (q.imgs && Array.isArray(q.imgs) && q.imgs.length > 0) ? q.imgs : (q.img ? [q.img] : []);
+                const allImgs = (q.imgs && Array.isArray(q.imgs) && q.imgs.length > 0) ? q.imgs : (q.img ? [q.img] : []);
+                const imgs = allImgs.filter(src => !src.startsWith('CLOUD_IMG|'));
                 state.currentGameImages = imgs;
                 if (imgs.length === 0) {
                     qImgContainer.classList.add('hidden');
@@ -3549,7 +3600,8 @@
             
             const qImgContainer = getEl('question-image-container');
             if (qImgContainer) {
-                const imgs = (item.imgs && Array.isArray(item.imgs) && item.imgs.length > 0) ? item.imgs : (item.img ? [item.img] : []);
+                const allReviewImgs = (item.imgs && Array.isArray(item.imgs) && item.imgs.length > 0) ? item.imgs : (item.img ? [item.img] : []);
+                const imgs = allReviewImgs.filter(src => !src.startsWith('CLOUD_IMG|'));
                 state.currentReviewImages = imgs;
                 if (imgs.length === 0) {
                     qImgContainer.classList.add('hidden');
