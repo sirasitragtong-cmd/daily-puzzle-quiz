@@ -1,4 +1,4 @@
-const CACHE_NAME = 'daily-puzzle-quiz-cache-v2';
+const CACHE_NAME = 'daily-puzzle-quiz-cache-v3';
 const PRECACHE_URLS = [
     './',
     './index.html',
@@ -17,7 +17,10 @@ self.addEventListener('install', (event) => {
         caches.open(CACHE_NAME).then(async (cache) => {
             for (const url of PRECACHE_URLS) {
                 try {
-                    const req = new Request(url, { mode: url.startsWith('http') ? 'cors' : 'same-origin' });
+                    const req = new Request(url, {
+                        mode: url.startsWith('http') ? 'cors' : 'same-origin',
+                        cache: 'reload'
+                    });
                     const res = await fetch(req);
                     if (res && (res.ok || res.type === 'opaque')) {
                         await cache.put(url, res);
@@ -60,10 +63,10 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // Navigation / HTML requests: Network-first with fast offline fallback
+    // Navigation / HTML requests: Always fetch freshest from network (no-store) when online, fallback to cache when offline
     if (req.mode === 'navigate' || url.pathname.endsWith('/index.html') || url.pathname.endsWith('/')) {
         event.respondWith(
-            fetch(req)
+            fetch(req, { cache: 'no-store' })
                 .then((networkRes) => {
                     if (networkRes && networkRes.ok) {
                         const copy = networkRes.clone();
