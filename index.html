@@ -632,8 +632,15 @@
                 <div id="answer-badges" class="flex flex-wrap justify-center gap-3 mb-5 min-h-[28px]"></div>
                 
                 <!-- Main Question Text -->
-                <div class="glass w-full max-w-5xl p-5 sm:p-8 rounded-3xl text-center shadow-2xl border border-white/10 relative overflow-hidden">
+                <div id="question-card" class="glass w-full max-w-5xl p-5 sm:p-8 rounded-3xl text-center shadow-2xl border border-white/10 relative overflow-hidden">
                     <div class="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none"></div>
+                    <!-- Swipe Feedback Badges (Mobile Manual Mode Only) -->
+                    <div id="swipe-badge-correct" class="pointer-events-none absolute top-3 left-3 sm:top-4 sm:left-4 z-20 px-3.5 py-1.5 rounded-xl border-2 border-emerald-400 bg-emerald-500/30 text-emerald-200 font-black text-sm tracking-wider uppercase shadow-lg opacity-0" style="transform: rotate(-8deg); transition: opacity 0.08s ease;">
+                        ✓ ถูกต้อง
+                    </div>
+                    <div id="swipe-badge-wrong" class="pointer-events-none absolute top-3 right-3 sm:top-4 sm:right-4 z-20 px-3.5 py-1.5 rounded-xl border-2 border-red-400 bg-red-500/30 text-red-200 font-black text-sm tracking-wider uppercase shadow-lg opacity-0" style="transform: rotate(8deg); transition: opacity 0.08s ease;">
+                        ✕ ไม่ถูกต้อง
+                    </div>
                     <div id="question-text" class="text-xl sm:text-2xl md:text-4xl word-font font-bold leading-relaxed break-words whitespace-pre-wrap text-center text-white clean-text" style="min-height: 90px; display: flex; align-items: center; justify-content: center;">
                         <!-- Question content -->
                     </div>
@@ -1336,9 +1343,8 @@
 
     <!-- ==================== Firebase SDK ==================== -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getAuth, signInAnonymously, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, deleteDoc, writeBatch, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        let initializeApp, getAuth, signInAnonymously, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut;
+        let getFirestore, doc, setDoc, getDoc, collection, onSnapshot, deleteDoc, writeBatch, enableIndexedDbPersistence;
 
         const firebaseConfig = {
             projectId: "dairy-puzzle-quiz",
@@ -1347,19 +1353,62 @@
             appId: "1:638793633329:web:95a77f177f2eecc2148f10"
         };
 
-        let app, auth, db;
-        app = initializeApp(firebaseConfig);
-        auth = getAuth(app);
-        db = getFirestore(app);
+        let app = null, auth = null, db = null;
+        let firebaseReady = false;
+        let persistencePromise = Promise.resolve();
+        let firebaseInitPromise = null;
 
-        // Enable offline persistence
-        enableIndexedDbPersistence(db).catch((err) => {
-            if (err.code == 'failed-precondition') {
-                console.warn('Multiple tabs open, persistence can only be enabled in one tab at a a time.');
-            } else if (err.code == 'unimplemented') {
-                console.warn('The current browser does not support all of the features required to enable persistence');
-            }
-        });
+        const ensureFirebaseLoaded = () => {
+            if (firebaseReady) return Promise.resolve(true);
+            if (firebaseInitPromise) return firebaseInitPromise;
+            firebaseInitPromise = (async () => {
+                try {
+                    const [appMod, authMod, fsMod] = await Promise.all([
+                        import("https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js"),
+                        import("https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js"),
+                        import("https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js")
+                    ]);
+                    initializeApp = appMod.initializeApp;
+                    getAuth = authMod.getAuth;
+                    signInAnonymously = authMod.signInAnonymously;
+                    GoogleAuthProvider = authMod.GoogleAuthProvider;
+                    signInWithPopup = authMod.signInWithPopup;
+                    onAuthStateChanged = authMod.onAuthStateChanged;
+                    signOut = authMod.signOut;
+
+                    getFirestore = fsMod.getFirestore;
+                    doc = fsMod.doc;
+                    setDoc = fsMod.setDoc;
+                    getDoc = fsMod.getDoc;
+                    collection = fsMod.collection;
+                    onSnapshot = fsMod.onSnapshot;
+                    deleteDoc = fsMod.deleteDoc;
+                    writeBatch = fsMod.writeBatch;
+                    enableIndexedDbPersistence = fsMod.enableIndexedDbPersistence;
+
+                    app = initializeApp(firebaseConfig);
+                    auth = getAuth(app);
+                    db = getFirestore(app);
+
+                    // Enable offline persistence and keep promise
+                    persistencePromise = enableIndexedDbPersistence(db).catch((err) => {
+                        if (err.code == 'failed-precondition') {
+                            console.warn('Multiple tabs open, persistence can only be enabled in one tab at a time.');
+                        } else if (err.code == 'unimplemented') {
+                            console.warn('The current browser does not support all of the features required to enable persistence');
+                        }
+                    });
+                    await persistencePromise;
+                    firebaseReady = true;
+                    return true;
+                } catch (err) {
+                    console.warn("Firebase SDK offline or delayed, running in local/offline mode:", err);
+                    firebaseInitPromise = null;
+                    return false;
+                }
+            })();
+            return firebaseInitPromise;
+        };
 
         // --- State Management ---
         // Feature: Image Compression
@@ -1655,11 +1704,113 @@
         
         // --- Data Sync (Local & Cloud) ---
         
-        const saveToLocal = async () => {
+        const buildLightweightFoldersForSyncBackup = (folders) => {
+            if (!Array.isArray(folders)) return [];
+            return folders.map(f => ({
+                ...f,
+                questions: (f.questions || []).map(q => {
+                    const imgs = (q.imgs && Array.isArray(q.imgs)) ? q.imgs : (q.img ? [q.img] : []);
+                    const lightImgs = imgs.map((imgStr, idx) => {
+                        if (imgStr && imgStr.startsWith('data:image')) {
+                            const imgId = 'img_' + q.id + '_' + idx;
+                            imageCache[imgId] = imgStr;
+                            imageCache['img_' + q.id] = imgStr;
+                            return 'CLOUD_IMG|' + imgId;
+                        }
+                        return imgStr;
+                    });
+                    return {
+                        ...q,
+                        imgs: lightImgs,
+                        img: lightImgs.length > 0 ? lightImgs[0] : null
+                    };
+                })
+            }));
+        };
+
+        const saveToLocal = async (forceEmpty = false) => {
+            try {
+                // Synchronous localStorage backup for 0ms instant boot & offline resilience
+                if ((state.folders && state.folders.length > 0) || forceEmpty) {
+                    const lightFolders = buildLightweightFoldersForSyncBackup(state.folders || []);
+                    const jsonStr = JSON.stringify(lightFolders);
+                    try {
+                        localStorage.setItem('dairy_folders_backup', jsonStr);
+                        localStorage.removeItem('dairy_folders_backup_lz');
+                    } catch (lsErr) {
+                        if (typeof LZString !== 'undefined') {
+                            try {
+                                localStorage.setItem('dairy_folders_backup_lz', LZString.compressToUTF16(jsonStr));
+                                localStorage.removeItem('dairy_folders_backup');
+                            } catch (_) {}
+                        }
+                    }
+                }
+                if ((state.categories && state.categories.length > 0) || forceEmpty) {
+                    try {
+                        localStorage.setItem('dairy_categories_backup', JSON.stringify(state.categories || []));
+                    } catch (_) {}
+                }
+                if (state.streak) {
+                    try {
+                        localStorage.setItem('dairy_streak_backup', JSON.stringify(state.streak));
+                    } catch (_) {}
+                }
+            } catch (e) {
+                console.warn("Sync backup error:", e);
+            }
+
             if (typeof localforage !== 'undefined') {
-                await localforage.setItem('dairy_folders', state.folders);
-                await localforage.setItem('dairy_categories', state.categories);
-                await localforage.setItem('dairy_streak', state.streak);
+                try {
+                    if ((state.folders && state.folders.length > 0) || forceEmpty) {
+                        await localforage.setItem('dairy_folders', state.folders || []);
+                    }
+                    if ((state.categories && state.categories.length > 0) || forceEmpty) {
+                        await localforage.setItem('dairy_categories', state.categories || []);
+                    }
+                    if (state.streak) {
+                        await localforage.setItem('dairy_streak', state.streak);
+                    }
+                    if (Object.keys(imageCache).length > 0) {
+                        await localforage.setItem('dairy_image_cache', imageCache);
+                    }
+                } catch (e) {
+                    console.warn("localforage save error:", e);
+                }
+            }
+        };
+
+        // Synchronous 0ms loader from localStorage backup (runs before any async call)
+        const loadFromLocalSync = () => {
+            try {
+                const rawCats = localStorage.getItem('dairy_categories_backup') || localStorage.getItem('dairy_categories');
+                if (rawCats) {
+                    const parsedCats = JSON.parse(rawCats);
+                    if (Array.isArray(parsedCats) && parsedCats.length > 0) {
+                        state.categories = parsedCats;
+                    }
+                }
+                let rawFolders = localStorage.getItem('dairy_folders_backup') || localStorage.getItem('dairy_folders');
+                if (!rawFolders && typeof LZString !== 'undefined') {
+                    const lz = localStorage.getItem('dairy_folders_backup_lz');
+                    if (lz) rawFolders = LZString.decompressFromUTF16(lz);
+                }
+                if (rawFolders) {
+                    const parsedFolders = JSON.parse(rawFolders);
+                    if (Array.isArray(parsedFolders) && parsedFolders.length > 0) {
+                        state.folders = parsedFolders;
+                        state.folders.sort((a, b) => (a.order || 0) - (b.order || 0));
+                    }
+                }
+                const rawStreak = localStorage.getItem('dairy_streak_backup') || localStorage.getItem('dairy_streak');
+                if (rawStreak) {
+                    const parsedStreak = JSON.parse(rawStreak);
+                    if (parsedStreak && typeof parsedStreak === 'object') {
+                        state.streak = parsedStreak;
+                    }
+                }
+            } catch (e) {
+                console.warn("Sync restore error:", e);
             }
         };
         
@@ -1746,53 +1897,98 @@
         };
 
         const loadFromLocal = async () => {
-            if (typeof localforage === 'undefined') return;
-            
-            // Migration from localStorage to localforage
-            if (localStorage.getItem('dairy_folders') || localStorage.getItem('dairy_categories')) {
-                const f = localStorage.getItem('dairy_folders');
-                const c = localStorage.getItem('dairy_categories');
-                const s = localStorage.getItem('dairy_streak');
-                
-                if(f) await localforage.setItem('dairy_folders', JSON.parse(f));
-                if(c) await localforage.setItem('dairy_categories', JSON.parse(c));
-                if(s) await localforage.setItem('dairy_streak', JSON.parse(s));
-                
-                // Clear old localStorage to prevent duplicate migration
-                localStorage.removeItem('dairy_folders');
-                localStorage.removeItem('dairy_categories');
-                localStorage.removeItem('dairy_streak');
-            }
+            // 1. Always hydrate from synchronous backup first
+            loadFromLocalSync();
 
-            const f = await localforage.getItem('dairy_folders');
-            const c = await localforage.getItem('dairy_categories');
-            const s = await localforage.getItem('dairy_streak');
+            if (typeof localforage === 'undefined') {
+                await migrateData();
+                if(typeof window.updateStreakUI === 'function') window.updateStreakUI();
+                return;
+            }
             
-            if(f) {
-                state.folders = f;
-                state.folders.sort((a, b) => (a.order || 0) - (b.order || 0));
-                // Pre-warm imageCache from local storage
-                state.folders.forEach(folder => {
-                    (folder.questions || []).forEach(q => {
-                        const imgs = (q.imgs && Array.isArray(q.imgs)) ? q.imgs : (q.img ? [q.img] : []);
-                        imgs.forEach((imgStr, idx) => {
-                            if (imgStr && imgStr.startsWith('data:image')) {
-                                imageCache['img_' + q.id + '_' + idx] = imgStr;
-                                imageCache['img_' + q.id] = imgStr;
+            try {
+                // Migration from legacy localStorage keys to localforage
+                if (localStorage.getItem('dairy_folders') || localStorage.getItem('dairy_categories')) {
+                    const fOld = localStorage.getItem('dairy_folders');
+                    const cOld = localStorage.getItem('dairy_categories');
+                    const sOld = localStorage.getItem('dairy_streak');
+                    
+                    if(fOld) await localforage.setItem('dairy_folders', JSON.parse(fOld));
+                    if(cOld) await localforage.setItem('dairy_categories', JSON.parse(cOld));
+                    if(sOld) await localforage.setItem('dairy_streak', JSON.parse(sOld));
+                    
+                    localStorage.removeItem('dairy_folders');
+                    localStorage.removeItem('dairy_categories');
+                    localStorage.removeItem('dairy_streak');
+                }
+
+                const [f, c, s, cachedImgs] = await Promise.all([
+                    localforage.getItem('dairy_folders'),
+                    localforage.getItem('dairy_categories'),
+                    localforage.getItem('dairy_streak'),
+                    localforage.getItem('dairy_image_cache')
+                ]);
+
+                if (cachedImgs && typeof cachedImgs === 'object') {
+                    Object.assign(imageCache, cachedImgs);
+                }
+                
+                if (Array.isArray(f) && f.length > 0) {
+                    // Merge if sync backup has any folders not in localforage
+                    if (state.folders && state.folders.length > f.length) {
+                        const fIds = new Set(f.map(item => item.id));
+                        for (const syncF of state.folders) {
+                            if (syncF && syncF.id && !fIds.has(syncF.id)) {
+                                f.push(syncF);
                             }
+                        }
+                    }
+                    state.folders = f;
+                }
+                
+                if (state.folders && state.folders.length > 0) {
+                    state.folders.sort((a, b) => (a.order || 0) - (b.order || 0));
+                    // Pre-warm imageCache from local storage & resolve any CLOUD_IMG from imageCache
+                    state.folders.forEach(folder => {
+                        (folder.questions || []).forEach(q => {
+                            const imgs = (q.imgs && Array.isArray(q.imgs)) ? q.imgs : (q.img ? [q.img] : []);
+                            const resolved = imgs.map((imgStr, idx) => {
+                                if (imgStr && imgStr.startsWith('data:image')) {
+                                    imageCache['img_' + q.id + '_' + idx] = imgStr;
+                                    imageCache['img_' + q.id] = imgStr;
+                                    return imgStr;
+                                } else if (imgStr && imgStr.startsWith('CLOUD_IMG|')) {
+                                    const imgId = imgStr.split('|')[1];
+                                    return imageCache[imgId] || imageCache['img_' + q.id + '_' + idx] || imageCache['img_' + q.id] || imgStr;
+                                }
+                                return imgStr;
+                            });
+                            q.imgs = resolved.filter(Boolean);
+                            q.img = q.imgs.length > 0 ? q.imgs[0] : null;
                         });
                     });
-                });
+                }
+
+                if (Array.isArray(c) && c.length > 0) {
+                    state.categories = c;
+                }
+                if (s && typeof s === 'object') {
+                    state.streak = s;
+                }
+            } catch (err) {
+                console.warn("loadFromLocal error:", err);
             }
-            if(c) state.categories = c;
-            if(s) state.streak = s;
             
             await migrateData();
+            // Ensure sync backup is up to date if localforage had data
+            if ((state.folders && state.folders.length > 0) || (state.categories && state.categories.length > 0)) {
+                saveToLocal();
+            }
             if(typeof window.updateStreakUI === 'function') window.updateStreakUI();
         };
 
         const syncToCloud = async (type, item) => {
-            if (!state.uid || state.isAnonymous) return;
+            if (!firebaseReady || !db || !state.uid || state.isAnonymous) return;
             try {
                 if (type === 'folder') {
                     // Extract images to prevent 1MB document limit
@@ -1841,122 +2037,224 @@
             }
         };
 
-        const setupRealtimeCloudSync = () => {
+        const setupRealtimeCloudSync = async () => {
             if (!state.uid || state.isAnonymous) return;
+            await ensureFirebaseLoaded();
+            if (!firebaseReady || !db) return;
+            await persistencePromise;
             
             if (state.unsubFolders) state.unsubFolders();
             if (state.unsubCats) state.unsubCats();
+            if (state.unsubStreak) state.unsubStreak();
 
-            state.unsubFolders = onSnapshot(collection(db, `artifacts/${firebaseConfig.appId}/users/${state.uid}/folders`), (snapshot) => {
-                const folders = [];
-                snapshot.forEach(docSnap => folders.push(docSnap.data()));
-                
-                // Sort by order
-                folders.sort((a, b) => (a.order || 0) - (b.order || 0));
-                
-                // PHASE 1: Resolve images from cache immediately (no await)
-                // This allows instant rendering with cached images
-                for (const f of folders) {
-                    for (const q of (f.questions || [])) {
-                        const imgs = (q.imgs && Array.isArray(q.imgs)) ? q.imgs : (q.img ? [q.img] : []);
-                        const resolvedImgs = [];
-                        for (const imgStr of imgs) {
-                            if (imgStr && imgStr.startsWith('CLOUD_IMG|')) {
-                                const imgId = imgStr.split('|')[1];
-                                if (imageCache[imgId]) {
-                                    resolvedImgs.push(imageCache[imgId]);
-                                } else {
-                                    resolvedImgs.push(imgStr); // Keep placeholder for now
-                                }
-                            } else if (imgStr) {
-                                resolvedImgs.push(imgStr);
-                            }
-                        }
-                        q.imgs = resolvedImgs.filter(x => x !== null);
-                        q.img = q.imgs.length > 0 ? q.imgs[0] : null;
+            state.unsubFolders = onSnapshot(
+                collection(db, `artifacts/${firebaseConfig.appId}/users/${state.uid}/folders`),
+                { includeMetadataChanges: true },
+                (snapshot) => {
+                    const folders = [];
+                    snapshot.forEach(docSnap => folders.push(docSnap.data()));
+
+                    // CRITICAL OFFLINE / EMPTY CACHE PROTECTION:
+                    // Never let an empty cached/offline snapshot overwrite existing local folders!
+                    if (folders.length === 0 && (snapshot.metadata.fromCache || !navigator.onLine) && state.folders && state.folders.length > 0) {
+                        return;
                     }
-                }
-                
-                // Render immediately with whatever we have (cached or placeholder)
-                state.folders = folders;
-                migrateData();
-                saveToLocal();
-                renderDatabase();
-                if(state.editingFolderId) renderEditor(state.editingFolderId);
-                
-                // PHASE 2: Resolve remaining CLOUD_IMG references in background
-                const unresolvedImages = [];
-                for (const f of folders) {
-                    for (const q of (f.questions || [])) {
-                        (q.imgs || []).forEach((imgStr, idx) => {
-                            if (imgStr && imgStr.startsWith('CLOUD_IMG|')) {
-                                unresolvedImages.push({ folder: f, question: q, imgIndex: idx, imgId: imgStr.split('|')[1] });
-                            }
-                        });
-                    }
-                }
-                
-                if (unresolvedImages.length > 0) {
-                    // Fetch all unresolved images in parallel (non-blocking)
-                    Promise.all(unresolvedImages.map(async (item) => {
-                        try {
-                            const imgRef = doc(db, `artifacts/${firebaseConfig.appId}/users/${state.uid}/images`, item.imgId);
-                            const imgSnap = await getDoc(imgRef);
-                            if (imgSnap.exists() && imgSnap.data().base64) {
-                                const b64 = imgSnap.data().base64;
-                                imageCache[item.imgId] = b64;
-                                return { ...item, resolved: b64 };
-                            }
-                        } catch (e) {
-                            console.error("Failed to load cloud image", item.imgId, e);
-                        }
-                        return { ...item, resolved: null };
-                    })).then(results => {
-                        let anyResolved = false;
-                        for (const r of results) {
-                            if (r.resolved) {
-                                r.question.imgs[r.imgIndex] = r.resolved;
-                                anyResolved = true;
-                            }
-                        }
-                        if (anyResolved) {
-                            // Update q.img to match first resolved image
-                            for (const f of state.folders) {
-                                for (const q of (f.questions || [])) {
-                                    if (q.imgs && q.imgs.length > 0) {
-                                        q.img = q.imgs[0];
+
+                    // Preserve any existing local base64 images in imageCache before processing
+                    if (state.folders && state.folders.length > 0) {
+                        for (const lf of state.folders) {
+                            for (const lq of (lf.questions || [])) {
+                                const lImgs = (lq.imgs && Array.isArray(lq.imgs)) ? lq.imgs : (lq.img ? [lq.img] : []);
+                                lImgs.forEach((src, idx) => {
+                                    if (src && src.startsWith('data:image')) {
+                                        imageCache['img_' + lq.id + '_' + idx] = src;
+                                        imageCache['img_' + lq.id] = src;
                                     }
+                                });
+                            }
+                        }
+                    }
+
+                    // If snapshot comes from partial Firestore cache (offline or before full server sync),
+                    // merge with existing local folders so no folders or questions disappear!
+                    if (snapshot.metadata.fromCache && state.folders && state.folders.length > 0) {
+                        const snapFolderMap = new Map(folders.map(f => [f.id, f]));
+                        for (const localF of state.folders) {
+                            if (!localF || !localF.id) continue;
+                            if (!snapFolderMap.has(localF.id)) {
+                                folders.push(localF);
+                            } else {
+                                const cachedF = snapFolderMap.get(localF.id);
+                                if ((!cachedF.questions || cachedF.questions.length === 0) && localF.questions && localF.questions.length > 0) {
+                                    cachedF.questions = localF.questions;
                                 }
                             }
-                            saveToLocal();
-                            renderDatabase();
-                            if(state.editingFolderId) renderEditor(state.editingFolderId);
                         }
-                    });
-                }
-            });
-
-            state.unsubCats = onSnapshot(doc(db, `artifacts/${firebaseConfig.appId}/users/${state.uid}/settings`, 'categories'), (docSnap) => {
-                if (docSnap.exists() && docSnap.data().list) {
-                    state.categories = docSnap.data().list;
+                    }
+                    
+                    // Sort by order
+                    folders.sort((a, b) => (a.order || 0) - (b.order || 0));
+                    
+                    // PHASE 1: Resolve images from cache immediately (no await)
+                    for (const f of folders) {
+                        for (const q of (f.questions || [])) {
+                            const imgs = (q.imgs && Array.isArray(q.imgs)) ? q.imgs : (q.img ? [q.img] : []);
+                            const resolvedImgs = [];
+                            imgs.forEach((imgStr, idx) => {
+                                if (imgStr && imgStr.startsWith('CLOUD_IMG|')) {
+                                    const imgId = imgStr.split('|')[1];
+                                    const cached = imageCache[imgId] || imageCache['img_' + q.id + '_' + idx] || imageCache['img_' + q.id];
+                                    if (cached) {
+                                        imageCache[imgId] = cached;
+                                        resolvedImgs.push(cached);
+                                    } else {
+                                        resolvedImgs.push(imgStr); // Keep placeholder for now
+                                    }
+                                } else if (imgStr) {
+                                    resolvedImgs.push(imgStr);
+                                }
+                            });
+                            q.imgs = resolvedImgs.filter(x => x !== null);
+                            q.img = q.imgs.length > 0 ? q.imgs[0] : null;
+                        }
+                    }
+                    
+                    // Render immediately with whatever we have (cached or placeholder)
+                    state.folders = folders;
                     migrateData();
                     saveToLocal();
                     renderDatabase();
+                    if(state.editingFolderId) renderEditor(state.editingFolderId);
+                    
+                    // PHASE 2: Resolve remaining CLOUD_IMG references in background (only when online or from Firestore cache)
+                    const unresolvedImages = [];
+                    for (const f of folders) {
+                        for (const q of (f.questions || [])) {
+                            (q.imgs || []).forEach((imgStr, idx) => {
+                                if (imgStr && imgStr.startsWith('CLOUD_IMG|')) {
+                                    unresolvedImages.push({ folder: f, question: q, imgIndex: idx, imgId: imgStr.split('|')[1] });
+                                }
+                            });
+                        }
+                    }
+                    
+                    if (unresolvedImages.length > 0) {
+                        Promise.all(unresolvedImages.map(async (item) => {
+                            try {
+                                const imgRef = doc(db, `artifacts/${firebaseConfig.appId}/users/${state.uid}/images`, item.imgId);
+                                const imgSnap = await getDoc(imgRef);
+                                if (imgSnap.exists() && imgSnap.data().base64) {
+                                    const b64 = imgSnap.data().base64;
+                                    imageCache[item.imgId] = b64;
+                                    return { ...item, resolved: b64 };
+                                }
+                            } catch (e) {
+                                console.warn("Cloud image load deferred:", item.imgId);
+                            }
+                            return { ...item, resolved: null };
+                        })).then(results => {
+                            let anyResolved = false;
+                            for (const r of results) {
+                                if (r.resolved) {
+                                    r.question.imgs[r.imgIndex] = r.resolved;
+                                    anyResolved = true;
+                                }
+                            }
+                            if (anyResolved) {
+                                for (const f of state.folders) {
+                                    for (const q of (f.questions || [])) {
+                                        if (q.imgs && q.imgs.length > 0) {
+                                            q.img = q.imgs[0];
+                                        }
+                                    }
+                                }
+                                saveToLocal();
+                                renderDatabase();
+                                if(state.editingFolderId) renderEditor(state.editingFolderId);
+                            }
+                        });
+                    }
+                },
+                (err) => {
+                    console.warn("Folders snapshot offline/error, using local cache:", err);
                 }
-            });
+            );
 
-            state.unsubStreak = onSnapshot(doc(db, `artifacts/${firebaseConfig.appId}/users/${state.uid}/settings`, 'streak'), (docSnap) => {
-                if (docSnap.exists()) {
-                    state.streak = docSnap.data();
-                    saveToLocal();
-                    if(typeof updateStreakUI === 'function') updateStreakUI();
+            state.unsubCats = onSnapshot(
+                doc(db, `artifacts/${firebaseConfig.appId}/users/${state.uid}/settings`, 'categories'),
+                (docSnap) => {
+                    if (docSnap.exists() && docSnap.data().list && docSnap.data().list.length > 0) {
+                        state.categories = docSnap.data().list;
+                        migrateData();
+                        saveToLocal();
+                        renderDatabase();
+                    }
+                },
+                (err) => {
+                    console.warn("Categories snapshot offline/error, using local cache:", err);
                 }
-            });
+            );
+
+            state.unsubStreak = onSnapshot(
+                doc(db, `artifacts/${firebaseConfig.appId}/users/${state.uid}/settings`, 'streak'),
+                (docSnap) => {
+                    if (docSnap.exists()) {
+                        state.streak = docSnap.data();
+                        saveToLocal();
+                        if(typeof updateStreakUI === 'function') updateStreakUI();
+                    }
+                },
+                (err) => {
+                    console.warn("Streak snapshot offline/error, using local cache:", err);
+                }
+            );
+        };
+
+        const hideLoadingOverlay = () => {
+            const overlay = getEl('loading-overlay');
+            if (overlay && !overlay.classList.contains('hidden-screen')) {
+                overlay.style.opacity = '0';
+                setTimeout(() => overlay.classList.add('hidden-screen'), 400);
+            }
         };
 
         // --- Authentication ---
-        const initAuth = () => {
+        const initAuth = async () => {
+            // 1. Always load & render local cache FIRST before waiting for network/Firebase
+            loadSettings();
+            await loadFromLocal();
+            renderDatabase();
+
+            // Restore last known auth UI state immediately for offline/instant startup
+            const lastUid = localStorage.getItem('dairy_last_uid');
+            const lastEmail = localStorage.getItem('dairy_last_email');
+            if (lastUid && lastEmail) {
+                state.uid = lastUid;
+                state.isAnonymous = false;
+                state.userEmail = lastEmail;
+                getEl('user-email').innerText = lastEmail;
+                getEl('btn-login-google').classList.add('hidden');
+                getEl('btn-logout').classList.remove('hidden');
+                hideLoadingOverlay();
+            } else if ((state.folders && state.folders.length > 0) || !navigator.onLine) {
+                if (!getEl('user-email').innerText) {
+                    getEl('user-email').innerText = lastEmail || 'Offline / Local Mode';
+                }
+                hideLoadingOverlay();
+            }
+
+            // Safety timeout: never block the user on loading-overlay for more than 1.2s if internet is slow/broken
+            const overlayTimer = setTimeout(hideLoadingOverlay, 1200);
+
+            const loaded = await ensureFirebaseLoaded();
+            if (!loaded || !auth) {
+                clearTimeout(overlayTimer);
+                hideLoadingOverlay();
+                return;
+            }
+
             onAuthStateChanged(auth, async (user) => {
+                clearTimeout(overlayTimer);
                 if (user) {
                     state.uid = user.uid;
                     state.isAnonymous = user.isAnonymous;
@@ -1968,50 +2266,61 @@
                         getEl('btn-login-google').classList.remove('hidden');
                         getEl('btn-logout').classList.add('hidden');
                         // Show auto-login modal if not shown this session
-                        if (!sessionStorage.getItem('autoLoginShown')) {
+                        if (!sessionStorage.getItem('autoLoginShown') && navigator.onLine) {
                             showModal('auto-login-modal');
                             sessionStorage.setItem('autoLoginShown', 'true');
                         }
                     } else {
                         getEl('btn-login-google').classList.add('hidden');
                         getEl('btn-logout').classList.remove('hidden');
-                    }
-                    
-                    // After auth, load local first for instant UI, then sync
-                    await loadFromLocal();
-                    loadSettings();
-                    renderDatabase(); // Show cached data IMMEDIATELY for instant UI
-                    setupRealtimeCloudSync();
-                    
-                    // Remember last logged-in uid for offline cache isolation
-                    if (!state.isAnonymous) {
                         localStorage.setItem('dairy_last_uid', state.uid);
+                        if (user.email) localStorage.setItem('dairy_last_email', user.email);
                     }
                     
-                    getEl('loading-overlay').style.opacity = '0';
-                    setTimeout(() => getEl('loading-overlay').classList.add('hidden-screen'), 500);
+                    // Re-verify local data and start realtime cloud sync
+                    if (!state.folders || state.folders.length === 0) {
+                        await loadFromLocal();
+                    }
+                    loadSettings();
+                    renderDatabase();
+                    setupRealtimeCloudSync();
+                    hideLoadingOverlay();
 
                 } else {
+                    // If offline and we had a cached user, keep their local data intact!
+                    if (!navigator.onLine && (lastUid || (state.folders && state.folders.length > 0))) {
+                        hideLoadingOverlay();
+                        return;
+                    }
                     // No user, auto sign in anonymously
                     try {
                         await signInAnonymously(auth);
                     } catch (error) {
-                        console.error("Auth error", error);
-                        customAlert("Authentication failed: " + error.message);
+                        console.warn("Anonymous auth offline/error, continuing in local mode:", error);
+                        hideLoadingOverlay();
                     }
                 }
             });
         };
 
+        // Reconnect cloud sync automatically when internet comes back online
+        window.addEventListener('online', async () => {
+            const ok = await ensureFirebaseLoaded();
+            if (ok && state.uid && !state.isAnonymous) {
+                setupRealtimeCloudSync();
+            } else if (ok && !state.uid) {
+                initAuth();
+            }
+        });
+
         window.loginWithGoogle = async () => {
+            const ok = await ensureFirebaseLoaded();
+            if (!ok || !auth) {
+                customAlert("ไม่สามารถเชื่อมต่ออินเทอร์เน็ตได้ กรุณาตรวจสอบสัญญาณอินเทอร์เน็ตแล้วลองใหม่อีกครั้ง");
+                return;
+            }
             const provider = new GoogleAuthProvider();
             try {
-                // As per requirement: data saved before login will be lost.
-                // We clear local data so that when snapshot loads the Cloud data, it's fresh.
-                state.folders = [];
-                state.categories = [];
-                saveToLocal();
-                
                 await signInWithPopup(auth, provider);
                 hideModal('auto-login-modal');
                 
@@ -2025,15 +2334,24 @@
         };
 
         window.logout = async () => {
-            
             const res = await customConfirm("ต้องการออกจากระบบหรือไม่? (ข้อมูลจะถูกล้างจากเครื่องและเปลี่ยนเป็น Guest)");
             if (res) {
                 state.folders = [];
                 state.categories = [];
-                saveToLocal();
+                localStorage.removeItem('dairy_last_uid');
+                localStorage.removeItem('dairy_last_email');
+                await saveToLocal(true);
                 if(state.unsubFolders) state.unsubFolders();
                 if(state.unsubCats) state.unsubCats();
-                await signOut(auth);
+                if(state.unsubStreak) state.unsubStreak();
+                if (firebaseReady && auth) {
+                    try {
+                        await signOut(auth);
+                    } catch (e) {
+                        console.warn("Sign out offline:", e);
+                    }
+                }
+                renderDatabase();
             }
         };
 
@@ -2268,7 +2586,7 @@
             }
             state.categories = state.categories.filter(c => c.id !== id);
             saveDataAndSync('categories');
-            saveToLocal();
+            saveToLocal(true);
             renderDatabase();
         };
 
@@ -2581,7 +2899,7 @@
                 if(!(await customConfirm("ยืนยันการลบโฟลเดอร์นี้?"))) return;
             }
             state.folders = state.folders.filter(x => x.id !== f.id);
-            saveToLocal();
+            saveToLocal(true);
             syncToCloud('delete_folder', f.id);
             hideModal('editor-modal');
             renderDatabase();
@@ -2785,6 +3103,8 @@
             btnElement.disabled = true;
             
             try {
+                const ok = await ensureFirebaseLoaded();
+                if (!ok || !db) throw new Error("Offline");
                 const jsonStr = JSON.stringify(dataObj);
                 const compressed = LZString.compressToEncodedURIComponent(jsonStr);
                 const shareId = generateId().substring(0, 8);
@@ -2993,6 +3313,8 @@
         const processQRText = async (text) => {
             try {
                 if (text.startsWith("DQZ_CLOUD|")) {
+                    const ok = await ensureFirebaseLoaded();
+                    if (!ok || !db) throw new Error("Offline");
                     const shareId = text.substring(10);
                     // โหลดจาก Cloud
                     const docRef = doc(db, `artifacts/${firebaseConfig.appId}/qr_shares`, shareId);
@@ -3237,6 +3559,8 @@
 
         const loadQuestion = () => {
             if (typeof window.closeZoomModal === 'function') window.closeZoomModal();
+            state.manualActionPending = false;
+            if (typeof resetQuestionCardSwipe === 'function') resetQuestionCardSwipe(false);
             // Exit review mode if active
             if (state.reviewMode) {
                 state.reviewMode = false;
@@ -3770,7 +4094,11 @@
         };
 
         getEl('btn-manual-correct').onclick = () => {
+            if (state.manualActionPending) return;
             const q = state.gamePool[state.currentQIndex];
+            if (!q) return;
+            state.manualActionPending = true;
+            stopTimer();
             state.score++;
             playBombAnim('defuse');
             getEl('btn-review-back').classList.remove('hidden');
@@ -3780,11 +4108,17 @@
         };
 
         getEl('btn-manual-incorrect').onclick = () => {
+            if (state.manualActionPending) return;
             const q = state.gamePool[state.currentQIndex];
+            if (!q) return;
+            state.manualActionPending = true;
+            stopTimer();
             state.wrongAnswersLog.push({
                 q: q.q,
                 a: q.a,
-                user: "MANUAL CHECK (ผิด)"
+                user: "MANUAL CHECK (ผิด)",
+                imgs: (q.imgs && q.imgs.length > 0) ? [...q.imgs] : (q.img ? [q.img] : []),
+                img: q.img
             });
             state.answerHistory.unshift({ q: q.q, a: q.a, imgs: (q.imgs && q.imgs.length > 0) ? [...q.imgs] : (q.img ? [q.img] : []), img: q.img, cat: q.catName, folder: q.folderName, status: 'WRONG', user: "MANUAL CHECK (ผิด)" });
             playBombAnim('explode');
@@ -3796,6 +4130,175 @@
             state.currentQIndex++;
             setTimeout(loadQuestion, 500);
         };
+
+        // --- Mobile Touch Swipe for Question Card (MANUAL Mode Only) ---
+        function resetQuestionCardSwipe(animate = false) {
+            const card = getEl('question-card');
+            const badgeCorrect = getEl('swipe-badge-correct');
+            const badgeWrong = getEl('swipe-badge-wrong');
+            if (!card) return;
+            if (animate) {
+                card.style.transition = 'transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.25s ease, box-shadow 0.25s ease';
+            } else {
+                card.style.transition = 'none';
+            }
+            card.style.removeProperty('transform');
+            card.style.removeProperty('-webkit-transform');
+            card.style.removeProperty('border-color');
+            card.style.removeProperty('box-shadow');
+            if (badgeCorrect) {
+                badgeCorrect.style.opacity = '0';
+                badgeCorrect.style.transform = 'scale(0.9)';
+            }
+            if (badgeWrong) {
+                badgeWrong.style.opacity = '0';
+                badgeWrong.style.transform = 'scale(0.9)';
+            }
+            if (animate) {
+                setTimeout(() => {
+                    if (card) card.style.transition = '';
+                }, 260);
+            }
+        }
+
+        (function initMobileManualCardSwipe() {
+            const card = getEl('question-card');
+            if (!card) return;
+
+            let startX = 0;
+            let startY = 0;
+            let currentX = 0;
+            let isDragging = false;
+            let isScrolling = false;
+
+            const isMobileManualSwipeAllowed = () => {
+                // Strictly only for mobile / touch devices
+                const isMobileDevice = window.innerWidth <= 768 || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+                if (!isMobileDevice) return false;
+                // Strictly only when MANUAL mode is selected
+                const modeEl = getEl('setting-mode');
+                if (!modeEl || modeEl.value !== 'MANUAL') return false;
+                // Must be actively playing a question (not paused, not in review mode, not already transitioning)
+                if (state.isPaused || state.reviewMode || state.manualActionPending) return false;
+                // Do not allow if question was already forfeited via reveal button (btn-next visible)
+                const btnNext = getEl('btn-next');
+                if (btnNext && !btnNext.classList.contains('hidden')) return false;
+                // Do not allow if zoom modal is open
+                const zoomModal = getEl('image-zoom-modal');
+                if (zoomModal && !zoomModal.classList.contains('hidden')) return false;
+                // Must have a valid current question
+                if (!state.gamePool || !state.gamePool[state.currentQIndex]) return false;
+                return true;
+            };
+
+            card.addEventListener('touchstart', (e) => {
+                if (!isMobileManualSwipeAllowed()) return;
+                if (!e.touches || e.touches.length !== 1) return;
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+                currentX = 0;
+                isDragging = false;
+                isScrolling = false;
+            }, { passive: true });
+
+            card.addEventListener('touchmove', (e) => {
+                if (isScrolling || !e.touches || e.touches.length !== 1) return;
+                if (!isMobileManualSwipeAllowed()) return;
+
+                const dx = e.touches[0].clientX - startX;
+                const dy = e.touches[0].clientY - startY;
+
+                if (!isDragging) {
+                    if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
+                    if (Math.abs(dy) >= Math.abs(dx)) {
+                        // User is scrolling vertically
+                        isScrolling = true;
+                        return;
+                    }
+                    isDragging = true;
+                    card.style.transition = 'none';
+                }
+
+                if (e.cancelable) e.preventDefault();
+                currentX = dx;
+
+                const rotate = Math.max(-14, Math.min(14, dx * 0.06));
+                const transformStr = `translate3d(${dx}px, 0, 0) rotate(${rotate}deg)`;
+                card.style.setProperty('transform', transformStr, 'important');
+                card.style.setProperty('-webkit-transform', transformStr, 'important');
+
+                const threshold = Math.min(95, Math.max(60, card.offsetWidth * 0.22));
+                const progress = Math.min(1, Math.abs(dx) / threshold);
+                const badgeCorrect = getEl('swipe-badge-correct');
+                const badgeWrong = getEl('swipe-badge-wrong');
+
+                if (dx > 0) {
+                    // Swiping RIGHT -> CORRECT
+                    if (badgeCorrect) {
+                        badgeCorrect.style.opacity = String(progress);
+                        badgeCorrect.style.transform = `scale(${0.85 + progress * 0.15})`;
+                    }
+                    if (badgeWrong) {
+                        badgeWrong.style.opacity = '0';
+                    }
+                    card.style.setProperty('border-color', `rgba(16, 185, 129, ${0.25 + progress * 0.65})`, 'important');
+                    card.style.setProperty('box-shadow', `0 12px 35px -5px rgba(16, 185, 129, ${progress * 0.4})`, 'important');
+                } else if (dx < 0) {
+                    // Swiping LEFT -> WRONG
+                    if (badgeWrong) {
+                        badgeWrong.style.opacity = String(progress);
+                        badgeWrong.style.transform = `scale(${0.85 + progress * 0.15})`;
+                    }
+                    if (badgeCorrect) {
+                        badgeCorrect.style.opacity = '0';
+                    }
+                    card.style.setProperty('border-color', `rgba(239, 68, 68, ${0.25 + progress * 0.65})`, 'important');
+                    card.style.setProperty('box-shadow', `0 12px 35px -5px rgba(239, 68, 68, ${progress * 0.4})`, 'important');
+                }
+            }, { passive: false });
+
+            const finishSwipe = () => {
+                if (!isDragging) return;
+                isDragging = false;
+
+                if (!isMobileManualSwipeAllowed()) {
+                    resetQuestionCardSwipe(true);
+                    return;
+                }
+
+                const threshold = Math.min(95, Math.max(60, card.offsetWidth * 0.22));
+                if (currentX >= threshold) {
+                    // Swipe RIGHT = CORRECT
+                    const flyOutStr = `translate3d(${window.innerWidth}px, 0, 0) rotate(18deg)`;
+                    card.style.transition = 'transform 0.28s ease-out';
+                    card.style.setProperty('transform', flyOutStr, 'important');
+                    card.style.setProperty('-webkit-transform', flyOutStr, 'important');
+                    const btnCorrect = getEl('btn-manual-correct');
+                    if (btnCorrect) btnCorrect.click();
+                } else if (currentX <= -threshold) {
+                    // Swipe LEFT = WRONG
+                    const flyOutStr = `translate3d(-${window.innerWidth}px, 0, 0) rotate(-18deg)`;
+                    card.style.transition = 'transform 0.28s ease-out';
+                    card.style.setProperty('transform', flyOutStr, 'important');
+                    card.style.setProperty('-webkit-transform', flyOutStr, 'important');
+                    const btnIncorrect = getEl('btn-manual-incorrect');
+                    if (btnIncorrect) btnIncorrect.click();
+                } else {
+                    resetQuestionCardSwipe(true);
+                }
+                currentX = 0;
+            };
+
+            card.addEventListener('touchend', finishSwipe, { passive: true });
+            card.addEventListener('touchcancel', () => {
+                if (isDragging) {
+                    isDragging = false;
+                    currentX = 0;
+                    resetQuestionCardSwipe(true);
+                }
+            }, { passive: true });
+        })();
+
 
         
         // Manual mode keyboard shortcuts
@@ -4259,8 +4762,23 @@
             };
             initAllResizers();
 
-            // Start auth process
+            // Register Service Worker for offline reload support
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('./sw.js').catch((err) => {
+                    console.warn('ServiceWorker registration failed:', err);
+                });
+            }
 
+            // Reconnect Firebase sync automatically if user started offline and comes back online
+            window.addEventListener('online', async () => {
+                if (!firebaseReady) {
+                    initAuth();
+                } else if (state.uid && !state.unsubFolders) {
+                    setupRealtimeCloudSync();
+                }
+            });
+
+            // Start auth process
             initAuth();
         });
 
