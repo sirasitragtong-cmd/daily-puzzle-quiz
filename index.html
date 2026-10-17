@@ -3,11 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Daily Puzzle Quiz</title>
+    <title>Daily Puzzle Quiz — ระบบคลังข้อสอบและแบบฝึกหัดทบทวนความรู้</title>
+    <meta name="description" content="Daily Puzzle Quiz เว็บแอปพลิเคชันสร้างคลังข้อสอบ Flashcard และแบบฝึกหัดทบทวนความรู้รายวัน รองรับรูปภาพหลายรูป โหมดจับเวลา โหมดตรวจสอบทำเอง (Manual Swipe/Flip) และซิงค์ข้อมูลผ่าน Cloud">
+    <meta name="keywords" content="Daily Puzzle Quiz, คลังข้อสอบ, แบบฝึกหัด, ทบทวนความรู้, Flashcard, สร้างข้อสอบ, Quiz ออนไลน์, Sirasit Ragtong">
+    <meta name="author" content="Sirasit Ragtong">
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+    <link rel="canonical" href="https://sirasitragtong-cmd.github.io/daily-puzzle-quiz/">
+
+    <!-- Open Graph / Social -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://sirasitragtong-cmd.github.io/daily-puzzle-quiz/">
+    <meta property="og:title" content="Daily Puzzle Quiz — ระบบคลังข้อสอบและแบบฝึกหัดทบทวนความรู้">
+    <meta property="og:description" content="สร้างชุดข้อสอบและทบทวนความรู้รายวัน รองรับทั้งคอมพิวเตอร์และโทรศัพท์มือถือ พร้อมระบบ Cloud Sync และโหมดออฟไลน์">
+    <meta property="og:image" content="https://sirasitragtong-cmd.github.io/daily-puzzle-quiz/icon.png">
+    <meta property="og:locale" content="th_TH">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Daily Puzzle Quiz — ระบบคลังข้อสอบและแบบฝึกหัดทบทวนความรู้">
+    <meta name="twitter:description" content="สร้างชุดข้อสอบและทบทวนความรู้รายวัน รองรับทั้งคอมพิวเตอร์และโทรศัพท์มือถือ พร้อมระบบ Cloud Sync">
+
+    <!-- Structured Data (JSON-LD) for Google Search -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Daily Puzzle Quiz",
+      "url": "https://sirasitragtong-cmd.github.io/daily-puzzle-quiz/",
+      "applicationCategory": "EducationalApplication",
+      "operatingSystem": "All",
+      "author": {
+        "@type": "Person",
+        "name": "Sirasit Ragtong"
+      },
+      "description": "เว็บแอปพลิเคชันสร้างคลังข้อสอบและแบบฝึกหัดทบทวนความรู้รายวัน รองรับโหมดจับเวลาและโหมดทบทวนด้วยตนเอง"
+    }
+    </script>
+
     <!-- App Icons -->
     <link rel="icon" href="icon.png" type="image/png">
     <link rel="apple-touch-icon" href="icon.png">
-    <meta name="theme-color" content="#0f172a">
+    <meta name="theme-color" content="#0b0f19">
 
     <!-- Tailwind CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -16,12 +50,12 @@
             theme: {
                 extend: {
                     colors: {
-                        primary: '#00f3ff',
-                        secondary: '#ff00ff',
-                        bgDark: '#050505',
-                        surface: '#111111',
-                        accent: '#39ff14',
-                        bomb: '#ff003c'
+                        primary: '#38bdf8',
+                        secondary: '#f472b6',
+                        bgDark: '#090d16',
+                        surface: '#111827',
+                        accent: '#34d399',
+                        bomb: '#f43f5e'
                     },
                     fontFamily: {
                         sans: ['Inter', 'Prompt', 'sans-serif'],
@@ -32,7 +66,7 @@
                         'explode': 'explode 0.5s ease-out forwards',
                         'defuse': 'defuse 0.5s ease-out forwards',
                         'blob': 'blob 7s infinite',
-                        'fade-in': 'fadeIn 0.3s ease-out forwards'
+                        'fade-in': 'fadeIn 0.25s ease-out forwards'
                     },
                     keyframes: {
                         wiggle: {
@@ -41,12 +75,12 @@
                         },
                         explode: {
                             '0%': { transform: 'scale(1)', opacity: 1 },
-                            '50%': { transform: 'scale(1.5)', opacity: 0.8 },
+                            '50%': { transform: 'scale(1.35)', opacity: 0.85 },
                             '100%': { transform: 'scale(0)', opacity: 0 }
                         },
                         defuse: {
                             '0%': { transform: 'scale(1)' },
-                            '50%': { transform: 'scale(1.2)' },
+                            '50%': { transform: 'scale(1.18)' },
                             '100%': { transform: 'scale(0)', opacity: 0 }
                         },
                         blob: {
@@ -56,7 +90,7 @@
                             '100%': { transform: 'translate(0px, 0px) scale(1)' }
                         },
                         fadeIn: {
-                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '0%': { opacity: '0', transform: 'translateY(6px)' },
                             '100%': { opacity: '1', transform: 'translateY(0)' }
                         }
                     }
@@ -65,7 +99,7 @@
         }
     </script>
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&family=Press+Start+2P&family=Prompt:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- SortableJS -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <!-- QR Code Features -->
@@ -74,63 +108,55 @@
     <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
 
     <style>
-        /* Custom CSS */
+        /* Minimal Architectural Dark Theme */
         body {
-            background-color: #0f172a;
-            color: white;
+            background-color: #090d16;
+            color: #f8fafc;
             overflow-x: hidden;
-            overscroll-behavior-y: none; /* Prevent bounce scrolling on mobile */
-            font-family: 'Inter', 'Prompt', sans-serif;
+            overscroll-behavior-y: none;
+            font-family: 'Inter', 'Prompt', -apple-system, BlinkMacSystemFont, sans-serif;
             -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            letter-spacing: -0.01em;
         }
         .hidden-screen {
             display: none !important;
         }
         /* Modal Transitions */
         .modal-container {
-            transition: opacity 0.3s ease;
+            transition: opacity 0.22s ease;
         }
         /* Scrollbar */
         ::-webkit-scrollbar {
             -webkit-appearance: none;
-            width: 8px;
+            width: 6px;
+            height: 6px;
         }
         ::-webkit-scrollbar:vertical {
             display: block;
         }
         ::-webkit-scrollbar-track {
-            background: rgba(30, 41, 59, 0.5);
-            -webkit-appearance: none;
+            background: rgba(15, 23, 42, 0.4);
         }
         ::-webkit-scrollbar-thumb {
-            background: #475569;
-            border-radius: 4px;
-            -webkit-appearance: none;
+            background: rgba(148, 163, 184, 0.25);
+            border-radius: 9999px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #64748b;
+            background: rgba(148, 163, 184, 0.45);
         }
         @media (max-width: 768px) {
             ::-webkit-scrollbar {
-                -webkit-appearance: none;
-                width: 14px; /* Make it significantly wider on mobile */
-            }
-            ::-webkit-scrollbar:vertical {
-                display: block;
+                width: 8px;
             }
             ::-webkit-scrollbar-track {
-                background: rgba(30, 41, 59, 0.8); /* Make track slightly darker on mobile to be clearly visible */
+                background: rgba(15, 23, 42, 0.6);
             }
             ::-webkit-scrollbar-thumb {
-                background: #94a3b8; /* Lighter color on mobile to stand out */
-                border-radius: 7px;
-                border: 2px solid rgba(30, 41, 59, 1); /* Add a border to give a pill effect and slightly separate from edge */
-                -webkit-appearance: none;
+                background: rgba(148, 163, 184, 0.4);
+                border-radius: 9999px;
             }
         }
-        
-        /* Force scrollbars to always show on specific lists by using overflow-y: scroll */
-        /* But we will apply it directly via JS or CSS classes where needed. */
 
         /* Toggle Switch */
         .toggle-checkbox:checked {
@@ -141,15 +167,15 @@
             background-color: #10b981;
         }
         .toggle-checkbox.pink:checked {
-            border-color: #ec4899;
+            border-color: #f472b6;
         }
         .toggle-checkbox.pink:checked + .toggle-label {
-            background-color: #ec4899;
+            background-color: #f472b6;
         }
         /* Checkbox custom */
         .custom-checkbox:checked {
-            background-color: #ec4899;
-            border-color: #ec4899;
+            background-color: #38bdf8;
+            border-color: #38bdf8;
         }
         /* Fraction formatting */
         .fraction {
@@ -161,7 +187,7 @@
             font-size: 0.9em;
         }
         .fraction > span:first-child {
-            border-bottom: 2px solid white;
+            border-bottom: 1.5px solid currentColor;
             padding: 0 4px;
             line-height: 1.2;
         }
@@ -169,115 +195,135 @@
             padding: 0 4px;
             line-height: 1.2;
         }
-        
-        /* Background grid */
-        .bg-grid {
-            background-size: 40px 40px;
-            background-image: linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-                              linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-        }
-        
-        /* Glassmorphism */
-        .glass {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transform: translateZ(0); /* Force GPU Acceleration */
-            -webkit-transform: translateZ(0);
-            backface-visibility: hidden;
-            -webkit-backface-visibility: hidden;
-            will-change: transform, backdrop-filter;
-        }
-        
-        /* Drop zone */
-        .drop-zone.dragover {
-            background-color: rgba(79, 70, 229, 0.2);
-            border: 2px dashed #4f46e5;
-        }
-    
-        /* Arcade specific styles */
-        .font-arcade { font-family: 'Press Start 2P', cursive; }
-        .arcade-title {
-            font-family: 'Press Start 2P', cursive;
-            text-shadow: 4px 4px 0 #ff00ff, -4px -4px 0 #00f3ff;
-            color: white;
-            letter-spacing: 2px;
-            line-height: 1.5;
-        }
-        .arcade-btn {
-            font-family: 'Press Start 2P', cursive;
-            text-transform: uppercase;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            background: rgba(0, 0, 0, 0.5);
-            color: white;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
-            transition: all 0.2s ease;
-            border-radius: 0.75rem !important;
-            padding-top: 1rem;
-            padding-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .arcade-btn:active {
-            transform: translateY(2px);
-            box-shadow: 0 0 0 0 transparent;
-        }
-        .arcade-btn-primary { border-color: rgba(0, 243, 255, 0.4); color: #00f3ff; }
-        .arcade-btn-primary:hover { background: rgba(0, 243, 255, 0.1); border-color: #00f3ff; }
-        
-        .arcade-btn-secondary { border-color: rgba(255, 0, 255, 0.4); color: #ff00ff; }
-        .arcade-btn-secondary:hover { background: rgba(255, 0, 255, 0.1); border-color: #ff00ff; }
-        
-        .arcade-btn-accent { border-color: rgba(57, 255, 20, 0.4); color: #39ff14; }
-        .arcade-btn-accent:hover { background: rgba(57, 255, 20, 0.1); border-color: #39ff14; }
-        
-        .arcade-btn-danger { border-color: rgba(255, 0, 60, 0.4); color: #ff003c; }
-        .arcade-btn-danger:hover { background: rgba(255, 0, 60, 0.1); border-color: #ff003c; }
 
-        .arcade-input {
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            background: rgba(0, 0, 0, 0.3);
-            color: #00f3ff;
-            font-family: 'Press Start 2P', cursive;
-            border-radius: 1rem !important;
-            text-shadow: none;
-            transition: all 0.2s;
-        }
-        .arcade-input:focus {
-            border-color: #00f3ff;
-            outline: none;
-            box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
-        }
-        /* Refined Modern UI */
+        /* Subtle Dot/Line Grid Background */
         .bg-grid {
-            background-size: 40px 40px;
-            background-image: 
-                linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px) !important;
+            background-size: 32px 32px;
+            background-image:
+                linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px) !important;
         }
+
+        /* Minimal Matte Surface Card */
         .glass {
-            background: rgba(15, 23, 42, 0.8) !important;
-            border: 1px solid rgba(255, 255, 255, 0.1) !important;
-            backdrop-filter: blur(12px) !important;
-            -webkit-backdrop-filter: blur(12px) !important;
-            border-radius: 1rem !important;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3) !important;
-            transform: translateZ(0) !important; /* Force GPU Acceleration */
+            background: rgba(17, 24, 39, 0.78) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            backdrop-filter: blur(16px) !important;
+            -webkit-backdrop-filter: blur(16px) !important;
+            border-radius: 1.25rem !important;
+            box-shadow: 0 4px 24px -4px rgba(0, 0, 0, 0.35), inset 0 1px 0 0 rgba(255, 255, 255, 0.04) !important;
+            transform: translateZ(0) !important;
             -webkit-transform: translateZ(0) !important;
             backface-visibility: hidden !important;
             -webkit-backface-visibility: hidden !important;
             will-change: transform, backdrop-filter !important;
         }
         .glass.border-red-500\/30 {
-            border-color: rgba(239, 68, 68, 0.3) !important;
-            box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.1) !important;
+            border-color: rgba(244, 63, 94, 0.28) !important;
+            box-shadow: 0 8px 20px -4px rgba(244, 63, 94, 0.08) !important;
         }
-        .text-bomb { color: #ff003c !important; }
+
+        /* Drop zone */
+        .drop-zone.dragover {
+            background-color: rgba(56, 189, 248, 0.08);
+            border: 1.5px dashed #38bdf8;
+        }
+
+        /* Minimal Typography & Controls (replacing retro arcade styling) */
+        .font-arcade {
+            font-family: 'JetBrains Mono', 'Inter', monospace;
+            letter-spacing: 0.04em;
+        }
+        .arcade-title {
+            font-family: 'Inter', 'Prompt', sans-serif;
+            font-weight: 800;
+            color: #f8fafc;
+            letter-spacing: -0.03em;
+            line-height: 1.2;
+            text-shadow: none !important;
+        }
+        .arcade-btn {
+            font-family: 'Inter', 'Prompt', sans-serif;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(17, 24, 39, 0.9);
+            color: #f8fafc;
+            box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.3), inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
+            transition: all 0.18s cubic-bezier(0.2, 0, 0, 1);
+            border-radius: 0.875rem !important;
+            padding-top: 0.875rem;
+            padding-bottom: 0.875rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .arcade-btn:hover {
+            transform: translateY(-1px);
+        }
+        .arcade-btn:active {
+            transform: translateY(1px);
+            box-shadow: none;
+        }
+        .arcade-btn-primary {
+            background: rgba(56, 189, 248, 0.1);
+            border-color: rgba(56, 189, 248, 0.3);
+            color: #38bdf8;
+        }
+        .arcade-btn-primary:hover {
+            background: rgba(56, 189, 248, 0.16);
+            border-color: rgba(56, 189, 248, 0.55);
+        }
+
+        .arcade-btn-secondary {
+            background: rgba(244, 114, 182, 0.1);
+            border-color: rgba(244, 114, 182, 0.3);
+            color: #f472b6;
+        }
+        .arcade-btn-secondary:hover {
+            background: rgba(244, 114, 182, 0.16);
+            border-color: rgba(244, 114, 182, 0.55);
+        }
+
+        .arcade-btn-accent {
+            background: rgba(52, 211, 153, 0.1);
+            border-color: rgba(52, 211, 153, 0.3);
+            color: #34d399;
+        }
+        .arcade-btn-accent:hover {
+            background: rgba(52, 211, 153, 0.16);
+            border-color: rgba(52, 211, 153, 0.55);
+        }
+
+        .arcade-btn-danger {
+            background: rgba(244, 63, 94, 0.1);
+            border-color: rgba(244, 63, 94, 0.3);
+            color: #fb7185;
+        }
+        .arcade-btn-danger:hover {
+            background: rgba(244, 63, 94, 0.16);
+            border-color: rgba(244, 63, 94, 0.55);
+        }
+
+        .arcade-input {
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(9, 13, 22, 0.75);
+            color: #f8fafc;
+            font-family: 'Inter', 'Prompt', sans-serif;
+            border-radius: 1rem !important;
+            text-shadow: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .arcade-input:focus {
+            border-color: #38bdf8;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.12);
+        }
+
+        .text-bomb { color: #f43f5e !important; }
         .word-font {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, Arial, sans-serif !important;
-            letter-spacing: normal !important;
+            font-family: 'Inter', 'Prompt', -apple-system, BlinkMacSystemFont, sans-serif !important;
+            letter-spacing: -0.01em !important;
             text-transform: none !important;
         }
 
@@ -287,7 +333,7 @@
             position: relative;
             width: 100%;
             height: 100%;
-            transition: transform 0.5s cubic-bezier(0.4,0,0.2,1);
+            transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
             transform-style: preserve-3d;
         }
         .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
@@ -304,14 +350,14 @@
         /* ===== Answered-correct list ===== */
         #correct-answers-list { list-style: none; padding: 0; }
         #correct-answers-list li {
-            animation: fadeInUp 0.3s ease both;
+            animation: fadeInUp 0.25s ease both;
         }
         @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(8px); }
+            from { opacity: 0; transform: translateY(6px); }
             to   { opacity: 1; transform: translateY(0); }
         }
 
-        /* ===== Mobile Optimisations ===== */
+        /* ===== Mobile & Desktop Responsive Refinements ===== */
         #question-card {
             touch-action: pan-y;
             -webkit-user-select: none;
@@ -319,22 +365,22 @@
             -webkit-touch-callout: none;
         }
         @media (max-width: 640px) {
-            .arcade-btn { font-size: 0.65rem !important; padding: 0.75rem 0.5rem !important; }
+            .arcade-btn { font-size: 0.85rem !important; padding: 0.75rem 0.75rem !important; }
             #question-text { font-size: 1.25rem !important; min-height: 80px !important; }
-            #answer-input  { font-size: 1rem !important; min-height: 70px !important; padding: 1rem !important; }
-            #btn-submit, #btn-skip, #btn-reveal, #btn-next { font-size: 0.6rem !important; }
+            #answer-input  { font-size: 1.05rem !important; min-height: 68px !important; padding: 0.875rem 1rem !important; }
+            #btn-submit, #btn-skip, #btn-reveal, #btn-next { font-size: 0.85rem !important; }
             #btn-review-back { padding: 0.5rem; }
             .game-action-row { flex-wrap: wrap; gap: 0.5rem !important; }
             .game-action-row > button { flex: 1 1 40% !important; min-width: 0; }
         }
-    
+
         [contenteditable="true"]:empty:before {
             content: attr(placeholder);
-            color: rgba(255, 255, 255, 0.4);
+            color: rgba(148, 163, 184, 0.45);
             pointer-events: none;
             display: block;
         }
-        
+
         /* Clean pasted styles from external sources */
         .clean-text *:not(.fraction):not(.fraction *):not(sup):not(sub):not(.text-red-500):not(.game-red-text) {
             font-family: inherit !important;
@@ -356,18 +402,18 @@
             bottom: -0.25em !important;
         }
         .format-btn {
-            background-color: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: #9ca3af;
-            transition: all 0.2s;
+            background-color: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #94a3b8;
+            transition: all 0.18s ease;
         }
         .format-btn:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-            color: white;
+            background-color: rgba(255, 255, 255, 0.09);
+            color: #f8fafc;
         }
         .format-btn.active {
-            background-color: rgba(236, 72, 153, 0.2); /* Pink tint */
-            border-color: rgba(236, 72, 153, 0.5);
+            background-color: rgba(244, 114, 182, 0.15);
+            border-color: rgba(244, 114, 182, 0.45);
             color: #f472b6;
         }
     </style>
@@ -418,196 +464,205 @@
 
     <!-- Loading Overlay -->
     <div id="loading-overlay" class="fixed inset-0 bg-bgDark z-50 flex flex-col items-center justify-center transition-opacity duration-500">
-        <div class="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-        <div class="mt-4 text-xl font-bold tracking-widest text-primary animate-pulse">SYSTEM INITIALIZING...</div>
+        <div class="w-12 h-12 border-2 border-primary/80 border-t-transparent rounded-full animate-spin"></div>
+        <div class="mt-4 text-xs font-mono font-medium tracking-[0.2em] text-gray-400 uppercase">Initializing Workspace</div>
     </div>
 
-    <div id="app-container" class="relative z-10 container mx-auto px-4 py-8 max-w-5xl">
+    <div id="app-container" class="relative z-10 container mx-auto px-4 sm:px-6 py-6 sm:py-10 max-w-5xl">
         
         <!-- Header -->
-        <header class="flex flex-col md:flex-row justify-between items-center mb-8 glass rounded-2xl p-6 shadow-2xl border-t border-white/10">
-            <div>
-                <h1 class="text-3xl md:text-4xl arcade-title mb-2">DAILY PUZZLE</h1>
-                <p class="text-primary font-arcade text-xs mt-2">Credit by Sirasit Ragtong</p>
+        <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 glass rounded-2xl px-6 py-5 border border-white/10">
+            <div class="flex items-center gap-3.5">
+                <div class="w-10 h-10 rounded-xl bg-primary/10 border border-primary/25 flex items-center justify-center text-primary flex-shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl arcade-title tracking-tight">DAILY PUZZLE</h1>
+                    <p class="text-gray-400 font-mono text-[11px] mt-0.5">Created by Sirasit Ragtong</p>
+                </div>
             </div>
-            <div id="auth-section" class="mt-4 md:mt-0 flex flex-col items-end">
-                <div id="auth-status-container" class="flex items-center space-x-3">
-                    <span id="local-mode-badge" class="hidden px-3 py-1 bg-yellow-500/20 text-yellow-400 text-xs rounded-full font-bold uppercase tracking-wide border border-yellow-500/50">LOCAL MODE ACTIVE</span>
-                    <span id="user-email" class="text-sm font-medium cursor-pointer hover:text-primary transition-colors text-gray-300"></span>
-                    <button id="btn-login-google" class="hidden px-4 py-2 bg-white text-gray-900 rounded-lg font-bold text-sm hover:bg-gray-200 transition-colors shadow-lg flex items-center space-x-2">
+            <div id="auth-section" class="w-full sm:w-auto flex flex-col items-end">
+                <div id="auth-status-container" class="flex items-center justify-end space-x-3 w-full sm:w-auto">
+                    <span id="local-mode-badge" class="hidden px-2.5 py-1 bg-amber-500/10 text-amber-400 text-[11px] rounded-md font-mono font-medium uppercase tracking-wider border border-amber-500/25">Local Mode</span>
+                    <span id="user-email" class="text-xs sm:text-sm font-medium cursor-pointer hover:text-primary transition-colors text-gray-300 truncate max-w-[180px] sm:max-w-xs"></span>
+                    <button id="btn-login-google" class="hidden px-4 py-2 bg-white text-gray-900 rounded-lg font-semibold text-xs sm:text-sm hover:bg-gray-100 transition-colors shadow-sm flex items-center space-x-2">
                         <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="currentColor" d="M21.35,11.1H12.18V13.83H18.69C18.36,17.64 15.19,19.27 12.19,19.27C8.36,19.27 5,16.25 5,12C5,7.9 8.2,4.73 12.2,4.73C15.29,4.73 17.1,6.7 17.1,6.7L19,4.72C19,4.72 16.56,2 12.1,2C6.42,2 2.03,6.8 2.03,12C2.03,17.05 6.16,22 12.25,22C17.6,22 21.5,18.33 21.5,12.91C21.5,11.76 21.35,11.1 21.35,11.1V11.1Z"/></svg>
-                        <span>Login</span>
+                        <span>Sign In</span>
                     </button>
-                    <button id="btn-logout" class="hidden px-3 py-1.5 bg-red-500/20 text-red-400 rounded-lg text-xs hover:bg-red-500/30 transition-colors border border-red-500/30">Logout</button>
+                    <button id="btn-logout" class="hidden px-3 py-1.5 bg-white/5 text-gray-300 rounded-lg text-xs hover:bg-red-500/15 hover:text-red-300 hover:border-red-500/30 transition-colors border border-white/10">Sign Out</button>
                 </div>
             </div>
         </header>
 
         <!-- ==================== SETUP SCREEN ==================== -->
-        <main id="setup-screen" class="space-y-8 animate-fade-in">
+        <main id="setup-screen" class="space-y-6 animate-fade-in">
             
-            <!-- Global Search -->
+            <!-- Global Search & Streak -->
             <div class="relative max-w-2xl mx-auto flex gap-3 items-center">
                 <div class="relative flex-shrink-0">
-                    <button id="streak-btn" onclick="showStreakMap()" class="bg-surface/80 border border-orange-500/30 rounded-2xl px-5 py-4 text-orange-400 font-bold shadow-xl flex items-center justify-center gap-2 hover:bg-orange-500/10 hover:border-orange-500/50 transition-all group relative">
-                        <span id="streak-icon" class="text-2xl group-hover:scale-110 transition-all drop-shadow-[0_0_5px_rgba(249,115,22,0.5)]">🔥</span> 
-                        <span id="streak-count" class="text-xl font-mono">0</span>
+                    <button id="streak-btn" onclick="showStreakMap()" class="glass border border-orange-500/30 rounded-xl px-4 py-3.5 text-orange-400 font-semibold flex items-center justify-center gap-2 hover:bg-orange-500/10 hover:border-orange-500/50 transition-all group relative">
+                        <span id="streak-icon" class="flex items-center justify-center text-orange-400 transition-transform group-hover:scale-105">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"/></svg>
+                        </span>
+                        <span id="streak-count" class="text-base font-mono font-bold">0</span>
                     </button>
                     <!-- Warning Tooltip -->
-                    <div id="streak-warning" class="absolute -top-3 -right-3 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-lg border border-white/20 animate-bounce pointer-events-none hidden z-10 word-font">
-                        ยังไม่ได้เล่น!
+                    <div id="streak-warning" class="absolute -top-2.5 -right-2.5 bg-rose-500 text-white text-[10px] font-medium px-2 py-0.5 rounded-full shadow-sm border border-white/20 pointer-events-none hidden z-10 word-font">
+                        ยังไม่ได้เล่น
                     </div>
                 </div>
                 <div class="relative flex-1">
-                    <input type="text" id="global-search-input" placeholder="ค้นหาโฟลเดอร์หรือหมวดหมู่..." class="w-full bg-surface/80 border border-white/20 rounded-2xl py-4 px-6 text-lg focus:outline-none focus:ring-2 focus:ring-primary shadow-xl transition-all">
-                    <div class="absolute right-4 top-4 text-gray-400">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    <input type="text" id="global-search-input" placeholder="ค้นหาโฟลเดอร์หรือหมวดหมู่..." class="w-full glass border border-white/10 rounded-xl py-3.5 pl-4 pr-11 text-sm sm:text-base text-white placeholder-gray-500 focus:outline-none focus:border-primary/60 transition-all">
+                    <div class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     </div>
                     <div id="global-search-results" class="absolute w-full mt-2 bg-surface border border-white/10 rounded-xl shadow-2xl max-h-64 overflow-y-auto z-50 hidden"></div>
                 </div>
             </div>
 
             <!-- Settings Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
                 
                 <!-- Time Setting -->
-                <div class="glass p-6 rounded-2xl flex items-center justify-between">
+                <div class="glass p-5 sm:p-6 rounded-2xl flex items-center justify-between">
                     <div>
-                        <h3 class="font-bold text-lg">เวลาต่อข้อ (วิ)</h3>
-                        <p class="text-sm text-gray-400">ปิดเพื่อจับเวลา</p>
+                        <h3 class="font-semibold text-base text-gray-100">เวลาต่อข้อ (วินาที)</h3>
+                        <p class="text-xs text-gray-400 mt-0.5">ปิดสวิตช์เพื่อเปิดใช้งานการจับเวลา</p>
                     </div>
-                    <div class="flex items-center space-x-4">
-                        <div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
-                            <input type="checkbox" name="toggle" id="toggle-no-time" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-transform duration-300 z-10"/>
-                            <label for="toggle-no-time" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-600 cursor-pointer transition-colors duration-300"></label>
+                    <div class="flex items-center space-x-3">
+                        <div class="relative inline-block w-11 align-middle select-none transition duration-200 ease-in">
+                            <input type="checkbox" name="toggle" id="toggle-no-time" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer transition-transform duration-300 z-10"/>
+                            <label for="toggle-no-time" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-700 cursor-pointer transition-colors duration-300"></label>
                         </div>
-                        <input type="number" id="setting-time" value="15" min="5" max="120" class="w-20 bg-bgDark border border-white/20 rounded-lg px-3 py-2 text-center focus:outline-none focus:border-primary">
+                        <input type="number" id="setting-time" value="15" min="5" max="120" class="w-16 bg-bgDark/90 border border-white/15 rounded-lg px-2.5 py-1.5 text-sm font-mono text-center focus:outline-none focus:border-primary">
                     </div>
                 </div>
 
                 <!-- Count Setting -->
-                <div class="glass p-6 rounded-2xl flex items-center justify-between">
+                <div class="glass p-5 sm:p-6 rounded-2xl flex items-center justify-between">
                     <div>
-                        <h3 class="font-bold text-lg">จำนวนข้อ</h3>
-                        <p class="text-sm text-gray-400">ปิดเพื่อเล่นตามจำนวน</p>
+                        <h3 class="font-semibold text-base text-gray-100">จำนวนข้อ</h3>
+                        <p class="text-xs text-gray-400 mt-0.5">ปิดสวิตช์เพื่อกำหนดจำนวนข้อเอง</p>
                     </div>
-                    <div class="flex items-center space-x-4">
-                        <div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
-                            <input type="checkbox" name="toggle" id="toggle-all-questions" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-transform duration-300 z-10"/>
-                            <label for="toggle-all-questions" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-600 cursor-pointer transition-colors duration-300"></label>
+                    <div class="flex items-center space-x-3">
+                        <div class="relative inline-block w-11 align-middle select-none transition duration-200 ease-in">
+                            <input type="checkbox" name="toggle" id="toggle-all-questions" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer transition-transform duration-300 z-10"/>
+                            <label for="toggle-all-questions" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-700 cursor-pointer transition-colors duration-300"></label>
                         </div>
-                        <input type="number" id="setting-count" value="5" min="1" class="w-20 bg-bgDark border border-white/20 rounded-lg px-3 py-2 text-center focus:outline-none focus:border-primary">
+                        <input type="number" id="setting-count" value="5" min="1" class="w-16 bg-bgDark/90 border border-white/15 rounded-lg px-2.5 py-1.5 text-sm font-mono text-center focus:outline-none focus:border-primary">
                     </div>
                 </div>
 
                 <!-- Mode Setting -->
-                <div class="glass p-6 rounded-2xl flex items-center justify-between">
+                <div class="glass p-5 sm:p-6 rounded-2xl flex items-center justify-between">
                     <div>
-                        <h3 class="font-bold text-lg">โหมดตรวจสอบ</h3>
-                        <p class="text-sm text-gray-400">อัตโนมัติ / ทำเอง</p>
+                        <h3 class="font-semibold text-base text-gray-100">โหมดตรวจสอบ</h3>
+                        <p class="text-xs text-gray-400 mt-0.5">ตรวจคำตอบอัตโนมัติ หรือทบทวนด้วยตนเอง</p>
                     </div>
-                    <select id="setting-mode" class="bg-bgDark border border-white/20 rounded-lg px-4 py-2 focus:outline-none focus:border-primary font-bold">
-                        <option value="AUTO">AUTO (ข้ามอัตโนมัติ)</option>
-                        <option value="MANUAL">MANUAL (ทบทวน)</option>
+                    <select id="setting-mode" class="bg-bgDark/90 border border-white/15 rounded-lg px-3.5 py-2 text-xs sm:text-sm focus:outline-none focus:border-primary font-medium text-gray-100">
+                        <option value="AUTO">AUTO (ตรวจอัตโนมัติ)</option>
+                        <option value="MANUAL">MANUAL (ทบทวนเอง)</option>
                     </select>
                 </div>
 
                 <!-- Other Toggles -->
-                <div class="glass p-6 rounded-2xl flex flex-col justify-center space-y-4">
+                <div class="glass p-5 sm:p-6 rounded-2xl flex flex-col justify-center space-y-3.5">
                     <div class="flex items-center justify-between">
-                        <h3 class="font-bold text-lg">สลับโจทย์/คำตอบ (50%)</h3>
-                        <div class="relative inline-block w-12 align-middle select-none transition duration-200 ease-in">
-                            <input type="checkbox" id="toggle-swap" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-transform duration-300 z-10"/>
-                            <label for="toggle-swap" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-600 cursor-pointer transition-colors duration-300"></label>
+                        <h3 class="font-medium text-sm sm:text-base text-gray-200">สลับโจทย์และคำตอบ (สุ่ม 50%)</h3>
+                        <div class="relative inline-block w-11 align-middle select-none transition duration-200 ease-in">
+                            <input type="checkbox" id="toggle-swap" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer transition-transform duration-300 z-10"/>
+                            <label for="toggle-swap" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-700 cursor-pointer transition-colors duration-300"></label>
                         </div>
                     </div>
-                    <div class="flex items-center justify-between border-t border-white/10 pt-4">
-                        <h3 class="font-bold text-lg text-accent">สลับโจทย์/คำตอบ (100%)</h3>
-                        <div class="relative inline-block w-12 align-middle select-none transition duration-200 ease-in">
-                            <input type="checkbox" id="toggle-swap-100" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-transform duration-300 z-10"/>
-                            <label for="toggle-swap-100" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-600 cursor-pointer transition-colors duration-300"></label>
+                    <div class="flex items-center justify-between border-t border-white/5 pt-3.5">
+                        <h3 class="font-medium text-sm sm:text-base text-accent">สลับโจทย์และคำตอบ (100%)</h3>
+                        <div class="relative inline-block w-11 align-middle select-none transition duration-200 ease-in">
+                            <input type="checkbox" id="toggle-swap-100" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer transition-transform duration-300 z-10"/>
+                            <label for="toggle-swap-100" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-700 cursor-pointer transition-colors duration-300"></label>
                         </div>
                     </div>
-                    <div class="flex items-center justify-between border-t border-white/10 pt-4">
-                        <div>
-                            <h3 class="font-bold text-lg text-secondary">QUESTION FILTER</h3>
-                            <p class="text-[10px] sm:text-xs text-gray-400 mt-1">
-                                ปิด: <span class="text-gray-300">เล่นทุกข้อ (ดึงคำถามทั้งหมดในโฟลเดอร์)</span><br>
-                                เปิด: <span class="text-accent">เล่นเฉพาะข้อที่ "ติ๊กถูก" ในหน้าเพิ่มข้อสอบ</span> <svg class="w-3 h-3 inline-block text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                    <div class="flex items-center justify-between border-t border-white/5 pt-3.5">
+                        <div class="pr-3">
+                            <h3 class="font-semibold text-sm sm:text-base text-secondary">ตัวกรองข้อสอบ (Question Filter)</h3>
+                            <p class="text-[11px] text-gray-400 mt-0.5 leading-relaxed">
+                                ปิด: <span class="text-gray-300">ดึงคำถามทุกข้อในโฟลเดอร์</span> •
+                                เปิด: <span class="text-accent">เฉพาะข้อที่เลือกไว้ในคลังข้อสอบ</span>
                             </p>
                         </div>
-                        <div class="relative inline-block w-12 align-middle select-none transition duration-200 ease-in">
-                            <input type="checkbox" id="toggle-filter" class="toggle-checkbox pink absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-transform duration-300 z-10"/>
-                            <label for="toggle-filter" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-600 cursor-pointer transition-colors duration-300"></label>
+                        <div class="relative inline-block w-11 flex-shrink-0 align-middle select-none transition duration-200 ease-in">
+                            <input type="checkbox" id="toggle-filter" class="toggle-checkbox pink absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer transition-transform duration-300 z-10"/>
+                            <label for="toggle-filter" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-700 cursor-pointer transition-colors duration-300"></label>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Action Buttons -->
-            <div class="flex flex-col md:flex-row justify-center items-center gap-4 py-4">
-                <button id="btn-import" class="w-full md:w-auto px-8 py-4 arcade-btn arcade-btn-accent">
-                    <span class="flex items-center justify-center"><svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg> IMPORT</span>
+            <div class="flex flex-col sm:flex-row justify-center items-stretch sm:items-center gap-3 pt-2">
+                <button id="btn-import" class="w-full sm:w-auto px-6 py-3.5 arcade-btn arcade-btn-accent text-sm">
+                    <span class="flex items-center justify-center"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg> นำเข้า (Import)</span>
                 </button>
                 <input type="file" id="file-import" accept=".json" class="hidden">
 
-                <button id="btn-database" class="w-full md:w-64 px-8 py-5 arcade-btn arcade-btn-primary text-xl">
-                    <span class="flex items-center justify-center"><svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg> DATABASE</span>
+                <button id="btn-database" class="w-full sm:w-56 px-6 py-3.5 arcade-btn arcade-btn-primary text-sm sm:text-base">
+                    <span class="flex items-center justify-center"><svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg> คลังข้อสอบ (Database)</span>
                 </button>
 
-                <button id="btn-export" class="w-full md:w-auto px-8 py-4 arcade-btn arcade-btn-secondary">
-                    <span class="flex items-center justify-center"><svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> EXPORT</span>
+                <button id="btn-export" class="w-full sm:w-auto px-6 py-3.5 arcade-btn arcade-btn-secondary text-sm">
+                    <span class="flex items-center justify-center"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> ส่งออก (Export)</span>
                 </button>
             </div>
 
             <!-- Start Button -->
-            <div class="flex justify-center mt-8">
-                <button id="btn-start-game" class="w-full md:w-96 px-8 py-6 arcade-btn arcade-btn-secondary text-2xl animate-pulse">
-                    INITIALIZE MISSION
+            <div class="flex justify-center pt-2">
+                <button id="btn-start-game" class="w-full sm:w-80 px-8 py-4 rounded-xl bg-primary text-slate-950 hover:bg-sky-300 font-bold text-base sm:text-lg tracking-wide shadow-lg shadow-primary/15 transition-all active:scale-[0.99]">
+                    เริ่มทำแบบทดสอบ (Start)
                 </button>
             </div>
 
             <!-- Pause History (Only visible when paused) -->
-            <!-- Pause History (Only visible when paused) -->
-            <div id="pause-history-section" class="hidden w-full max-w-4xl mx-auto mt-8 glass rounded-3xl p-6 border border-white/10">
-                <h3 class="text-xl font-bold mb-4 flex items-center text-gray-300"><span class="text-secondary mr-2">📋</span> BATTLE LOG</h3>
-                <div id="pause-history-list" class="space-y-3 max-h-[30vh] overflow-y-auto pr-2">
+            <div id="pause-history-section" class="hidden w-full max-w-4xl mx-auto mt-6 glass rounded-2xl p-6 border border-white/10">
+                <h3 class="text-base font-bold mb-4 flex items-center text-gray-200 tracking-wide">
+                    <svg class="w-5 h-5 text-secondary mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                    ประวัติการตอบ (Session Log)
+                </h3>
+                <div id="pause-history-list" class="space-y-2.5 max-h-[30vh] overflow-y-auto pr-2">
                     <!-- History populated here -->
                 </div>
             </div>
         </main>
 
         <!-- ==================== GAME SCREEN ==================== -->
-        <main id="game-screen" class="hidden-screen flex-col h-full min-h-[70vh] relative px-2 sm:px-0">
+        <main id="game-screen" class="hidden-screen flex-col h-full min-h-[70vh] relative px-1 sm:px-0">
             
             <!-- Game Header -->
-            <div class="flex justify-between items-center mb-6">
-                <button id="btn-pause" class="p-3 bg-surface hover:bg-gray-700 rounded-xl transition-colors border border-white/10">
-                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+            <div class="flex justify-between items-center mb-5">
+                <button id="btn-pause" class="p-2.5 bg-surface hover:bg-gray-800 rounded-xl transition-colors border border-white/10 text-gray-300 hover:text-white" title="หยุดชั่วคราว">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
                 </button>
-                <div class="glass px-6 py-2 rounded-full font-bold text-xl tracking-widest border border-primary/30 text-primary">
-                    MISSION <span id="game-current-q">1</span> / <span id="game-total-q">10</span>
+                <div class="glass px-5 py-1.5 rounded-full font-mono font-semibold text-sm sm:text-base tracking-wider border border-primary/25 text-primary">
+                    QUESTION <span id="game-current-q">1</span> / <span id="game-total-q">10</span>
                 </div>
-                <div class="flex gap-1">
-                    <button id="btn-review-back" class="hidden p-3 bg-surface hover:bg-gray-700 rounded-xl transition-colors border border-white/10" title="ย้อนดูข้อที่ตอบถูก">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                <div class="flex gap-1.5">
+                    <button id="btn-review-back" class="hidden p-2.5 bg-surface hover:bg-gray-800 rounded-xl transition-colors border border-white/10 text-gray-300" title="ย้อนดูข้อที่ตอบถูก">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                     </button>
-                    <button id="btn-review-forward" class="hidden p-3 bg-surface hover:bg-gray-700 rounded-xl transition-colors border border-white/10" title="ย้อนกลับไปข้อปัจจุบัน">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    <button id="btn-review-forward" class="hidden p-2.5 bg-surface hover:bg-gray-800 rounded-xl transition-colors border border-white/10 text-gray-300" title="กลับไปยังข้อปัจจุบัน">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                     </button>
                 </div>
             </div>
 
             <!-- Timer Area -->
-            <div id="timer-container" class="mb-8 hidden">
-                <div class="flex justify-between items-end mb-2">
-                    <div id="dynamite-icon" class="text-3xl transition-transform origin-bottom">🧨</div>
-                    <div id="time-display" class="font-mono text-3xl font-bold text-bomb">15.00</div>
-                </div>
-                <div class="h-4 bg-surface rounded-full overflow-hidden border border-white/10 relative">
-                    <div id="fuse-wire" class="absolute top-0 right-0 h-full bg-gradient-to-l from-yellow-400 via-orange-500 to-red-500 transition-all duration-100 ease-linear" style="width: 100%;">
-                        <div class="absolute left-0 top-1/2 -translate-y-1/2 -ml-2 w-4 h-4 bg-yellow-200 rounded-full animate-ping"></div>
+            <div id="timer-container" class="mb-6 hidden">
+                <div class="flex justify-between items-center mb-1.5">
+                    <div id="dynamite-icon" class="text-rose-500 transition-transform origin-bottom flex items-center">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     </div>
+                    <div id="time-display" class="font-mono text-xl sm:text-2xl font-bold text-bomb">15.00</div>
+                </div>
+                <div class="h-2 bg-surface rounded-full overflow-hidden border border-white/10 relative">
+                    <div id="fuse-wire" class="absolute top-0 right-0 h-full bg-gradient-to-l from-amber-400 via-orange-500 to-rose-500 transition-all duration-100 ease-linear" style="width: 100%;"></div>
                 </div>
             </div>
 
@@ -616,15 +671,15 @@
 
                 <!-- Source Flip Card -->
                 <div class="w-full max-w-5xl mb-3">
-                    <div id="source-flip-card" class="flip-card w-full" style="height:48px;" onclick="window.flipSourceCard()" title="กดเพื่อดูที่มาของข้อสอบ">
+                    <div id="source-flip-card" class="flip-card w-full" style="height:44px;" onclick="window.flipSourceCard()" title="กดเพื่อดูที่มาของข้อสอบ">
                         <div class="flip-card-inner">
-                            <div class="flip-card-front bg-white/5 border border-white/10 text-gray-400 text-xs font-medium tracking-wider select-none transition-colors hover:bg-white/10">
-                                กดเพื่อดูที่มาของข้อสอบ
+                            <div class="flip-card-front bg-white/[0.03] border border-white/10 text-gray-400 text-xs font-medium tracking-wide select-none transition-colors hover:bg-white/[0.06]">
+                                แตะเพื่อดูหมวดหมู่และโฟลเดอร์ที่มา
                             </div>
-                            <div class="flip-card-back bg-primary/10 border border-primary/20">
-                                <div class="flex flex-col items-center justify-center gap-1 text-center w-full px-2 h-full">
-                                    <span id="source-cat"  class="text-gray-400 text-[10px] font-bold tracking-widest uppercase truncate w-full text-center">—</span>
-                                    <span id="source-folder" class="text-gray-200 text-sm font-semibold truncate w-full text-center">—</span>
+                            <div class="flip-card-back bg-primary/10 border border-primary/25">
+                                <div class="flex flex-col items-center justify-center gap-0.5 text-center w-full px-2 h-full">
+                                    <span id="source-cat" class="text-gray-400 text-[10px] font-mono uppercase tracking-wider truncate w-full text-center">—</span>
+                                    <span id="source-folder" class="text-gray-100 text-xs sm:text-sm font-semibold truncate w-full text-center">—</span>
                                 </div>
                             </div>
                         </div>
@@ -632,28 +687,27 @@
                 </div>
 
                 <!-- Correct Answers So Far (multi-answer) -->
-                <ul id="correct-answers-list" class="flex flex-wrap justify-center gap-3 mb-4 w-full max-w-5xl min-h-[28px]"></ul>
+                <ul id="correct-answers-list" class="flex flex-wrap justify-center gap-2.5 mb-3 w-full max-w-5xl min-h-[24px]"></ul>
 
                 <!-- Answer Badges (remaining dots) -->
-                <div id="answer-badges" class="flex flex-wrap justify-center gap-3 mb-5 min-h-[28px]"></div>
+                <div id="answer-badges" class="flex flex-wrap justify-center gap-2.5 mb-4 min-h-[24px]"></div>
                 
-                <!-- Main Question Text -->
-                <div id="question-card" class="glass w-full max-w-5xl p-5 sm:p-8 rounded-3xl text-center shadow-2xl border border-white/10 relative overflow-hidden">
-                    <div class="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none"></div>
+                <!-- Main Question Card -->
+                <div id="question-card" class="glass w-full max-w-5xl p-6 sm:p-8 rounded-2xl text-center border border-white/10 relative overflow-hidden">
                     <!-- Swipe Feedback Badges (Mobile Manual Mode Only) -->
-                    <div id="swipe-badge-correct" class="pointer-events-none absolute top-3 left-3 sm:top-4 sm:left-4 z-30 px-3.5 py-1.5 rounded-xl border-2 border-emerald-400 bg-emerald-500/30 text-emerald-200 font-black text-sm tracking-wider uppercase shadow-lg opacity-0" style="transform: rotate(-8deg); transition: opacity 0.08s ease;">
-                        ✓ ถูกต้อง
+                    <div id="swipe-badge-correct" class="pointer-events-none absolute top-3 left-3 sm:top-4 sm:left-4 z-30 px-3 py-1 rounded-lg border border-emerald-400/80 bg-emerald-500/20 text-emerald-200 font-bold text-xs tracking-wider uppercase shadow-sm opacity-0" style="transform: rotate(-6deg); transition: opacity 0.08s ease;">
+                        ถูกต้อง
                     </div>
-                    <div id="swipe-badge-wrong" class="pointer-events-none absolute top-3 right-3 sm:top-4 sm:right-4 z-30 px-3.5 py-1.5 rounded-xl border-2 border-red-400 bg-red-500/30 text-red-200 font-black text-sm tracking-wider uppercase shadow-lg opacity-0" style="transform: rotate(8deg); transition: opacity 0.08s ease;">
-                        ✕ ไม่ถูกต้อง
+                    <div id="swipe-badge-wrong" class="pointer-events-none absolute top-3 right-3 sm:top-4 sm:right-4 z-30 px-3 py-1 rounded-lg border border-rose-400/80 bg-rose-500/20 text-rose-200 font-bold text-xs tracking-wider uppercase shadow-sm opacity-0" style="transform: rotate(6deg); transition: opacity 0.08s ease;">
+                        ไม่ถูกต้อง
                     </div>
 
                     <!-- Mobile Manual Flip Status Pill -->
-                    <div id="question-card-flip-pill" class="hidden mb-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tracking-wider uppercase bg-primary/15 text-primary border border-primary/30 pointer-events-none select-none">
-                        <span>📖 โจทย์คำถาม • แตะการ์ดเพื่อพลิกดูเฉลย</span>
+                    <div id="question-card-flip-pill" class="hidden mb-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-medium tracking-wide bg-primary/10 text-primary border border-primary/25 pointer-events-none select-none">
+                        <span>โจทย์คำถาม • แตะการ์ดเพื่อพลิกดูเฉลย</span>
                     </div>
 
-                    <div id="question-text" class="text-xl sm:text-2xl md:text-4xl word-font font-bold leading-relaxed break-words whitespace-pre-wrap text-center text-white clean-text" style="min-height: 90px; display: flex; align-items: center; justify-content: center;">
+                    <div id="question-text" class="text-xl sm:text-2xl md:text-3xl word-font font-semibold leading-relaxed break-words whitespace-pre-wrap text-center text-white clean-text" style="min-height: 90px; display: flex; align-items: center; justify-content: center;">
                         <!-- Question content -->
                     </div>
                     <div id="question-image-container" class="hidden mt-4 mx-auto max-w-full">
@@ -662,16 +716,16 @@
 
                     <!-- Flipped Answer Side (Mobile Manual Mode Only) -->
                     <div id="question-answer-back" class="hidden flex-col items-center justify-center py-4 px-2" style="min-height: 110px;">
-                        <div class="text-xs font-extrabold tracking-widest uppercase text-emerald-400 mb-3 flex items-center justify-center gap-1.5">
-                            <span>✨ เฉลยคำตอบ (CORRECT ANSWER)</span>
+                        <div class="text-[11px] font-mono font-semibold tracking-widest uppercase text-emerald-400 mb-2.5 flex items-center justify-center gap-1.5">
+                            <span>เฉลยคำตอบ (Correct Answer)</span>
                         </div>
-                        <div id="question-card-back-answers" class="text-xl sm:text-2xl md:text-3xl word-font font-black text-white flex flex-col items-center justify-center gap-2.5 clean-text w-full"></div>
+                        <div id="question-card-back-answers" class="text-xl sm:text-2xl md:text-3xl word-font font-bold text-white flex flex-col items-center justify-center gap-2 clean-text w-full"></div>
                     </div>
 
                     <!-- Mobile Manual Gesture Hint Bar -->
-                    <div id="question-card-mobile-hint" class="hidden mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-[11px] sm:text-xs font-bold tracking-wide pointer-events-none select-none">
-                        <span class="text-red-400 flex items-center gap-1">← ปัดซ้าย (ผิด)</span>
-                        <span id="question-card-tap-hint" class="text-cyan-300 flex items-center gap-1">👆 แตะเพื่อพลิกคำตอบ</span>
+                    <div id="question-card-mobile-hint" class="hidden mt-5 pt-3 border-t border-white/10 flex items-center justify-between text-[11px] font-medium tracking-wide pointer-events-none select-none">
+                        <span class="text-rose-400 flex items-center gap-1">← ปัดซ้าย (ผิด)</span>
+                        <span id="question-card-tap-hint" class="text-sky-300 flex items-center gap-1">แตะเพื่อพลิกคำตอบ</span>
                         <span class="text-emerald-400 flex items-center gap-1">ปัดขวา (ถูก) →</span>
                     </div>
                 </div>
@@ -681,87 +735,95 @@
             <div class="max-w-5xl w-full mx-auto relative z-10">
                 
                 <div class="flex justify-center gap-2 mb-2">
-                    <button class="format-btn format-sup px-3 py-1 rounded text-sm font-bold" onmousedown="event.preventDefault(); toggleFormatMode('superscript');" title="Superscript">X²</button>
-                    <button class="format-btn format-sub px-3 py-1 rounded text-sm font-bold" onmousedown="event.preventDefault(); toggleFormatMode('subscript');" title="Subscript">X₂</button>
+                    <button class="format-btn format-sup px-3 py-1 rounded-md text-xs font-mono font-semibold" onmousedown="event.preventDefault(); toggleFormatMode('superscript');" title="ตัวยก (Superscript)">X²</button>
+                    <button class="format-btn format-sub px-3 py-1 rounded-md text-xs font-mono font-semibold" onmousedown="event.preventDefault(); toggleFormatMode('subscript');" title="ตัวห้อย (Subscript)">X₂</button>
                 </div>
-                <div id="answer-input" contenteditable="true" class="w-full p-4 sm:p-6 text-lg sm:text-xl md:text-2xl text-center arcade-input word-font clean-text" placeholder="TYPE ANSWER..." spellcheck="false" style="min-height: 80px;"></div>
+                <div id="answer-input" contenteditable="true" class="w-full p-4 sm:p-5 text-lg sm:text-xl text-center arcade-input word-font clean-text" placeholder="พิมพ์คำตอบที่นี่..." spellcheck="false" style="min-height: 72px;"></div>
                 
                 <!-- Fraction Preview -->
-                <div id="fraction-preview" class="text-center h-7 mt-2 text-gray-400 text-base font-serif"></div>
+                <div id="fraction-preview" class="text-center h-6 mt-1.5 text-gray-400 text-sm font-serif"></div>
                 <!-- Action Buttons -->
-                <div class="game-action-row flex flex-row justify-center gap-2 sm:gap-4 mt-4">
-                    <button id="btn-submit" class="flex-1 py-3 sm:py-4 arcade-btn arcade-btn-primary text-sm sm:text-xl md:text-2xl">SUBMIT [Enter]</button>
-                    <button id="btn-skip" class="flex-1 py-3 sm:py-4 arcade-btn arcade-btn-secondary text-sm sm:text-xl md:text-2xl">SKIP</button>
-                    <button id="btn-reveal" class="flex-1 py-3 sm:py-4 arcade-btn arcade-btn-danger text-sm sm:text-xl md:text-2xl">REVEAL</button>
-                    <button id="btn-next" class="hidden flex-1 py-3 sm:py-4 arcade-btn arcade-btn-accent text-sm sm:text-xl md:text-2xl">NEXT</button>
-                    <button id="btn-manual-correct" class="hidden flex-1 py-3 sm:py-4 arcade-btn bg-emerald-500 hover:bg-emerald-400 text-white border-b-4 border-emerald-700 active:border-b-0 active:translate-y-1 text-sm sm:text-xl md:text-2xl font-black rounded-xl flex flex-col items-center justify-center leading-tight">
+                <div class="game-action-row flex flex-row justify-center gap-2.5 sm:gap-3.5 mt-3">
+                    <button id="btn-submit" class="flex-1 py-3 sm:py-3.5 arcade-btn arcade-btn-primary text-sm sm:text-base">ส่งคำตอบ (Enter)</button>
+                    <button id="btn-skip" class="flex-1 py-3 sm:py-3.5 arcade-btn arcade-btn-secondary text-sm sm:text-base">ข้าม (Skip)</button>
+                    <button id="btn-reveal" class="flex-1 py-3 sm:py-3.5 arcade-btn arcade-btn-danger text-sm sm:text-base">เฉลย (Reveal)</button>
+                    <button id="btn-next" class="hidden flex-1 py-3 sm:py-3.5 arcade-btn arcade-btn-accent text-sm sm:text-base">ข้อต่อไป (Next)</button>
+                    <button id="btn-manual-correct" class="hidden flex-1 py-3 sm:py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-400/30 active:translate-y-0.5 text-sm sm:text-base font-semibold rounded-xl flex flex-col items-center justify-center leading-tight transition-all">
                         <div>ถูกต้อง</div>
-                        <div class="hidden sm:block text-xs md:text-sm font-normal opacity-90 mt-1 tracking-wide">(กด Enter)</div>
+                        <div class="hidden sm:block text-[11px] font-normal opacity-80 mt-0.5">(กด Enter)</div>
                     </button>
-                    <button id="btn-manual-incorrect" class="hidden flex-1 py-3 sm:py-4 arcade-btn bg-red-500 hover:bg-red-400 text-white border-b-4 border-red-700 active:border-b-0 active:translate-y-1 text-sm sm:text-xl md:text-2xl font-black rounded-xl flex flex-col items-center justify-center leading-tight">
+                    <button id="btn-manual-incorrect" class="hidden flex-1 py-3 sm:py-3.5 bg-rose-600 hover:bg-rose-500 text-white border border-rose-400/30 active:translate-y-0.5 text-sm sm:text-base font-semibold rounded-xl flex flex-col items-center justify-center leading-tight transition-all">
                         <div>ไม่ถูกต้อง</div>
-                        <div class="hidden sm:block text-xs md:text-sm font-normal opacity-90 mt-1 tracking-wide">(กด Space bar)</div>
+                        <div class="hidden sm:block text-[11px] font-normal opacity-80 mt-0.5">(กด Spacebar)</div>
                     </button>
                 </div>
             </div>
 
             <!-- Correct Answer Reveal Area (Hidden) -->
-            <div id="reveal-area" class="hidden mt-8 glass p-6 rounded-2xl border border-red-500/30 bg-red-900/20 text-center mx-auto max-w-2xl w-full">
-                <h4 class="text-red-400 font-bold mb-2 tracking-widest text-sm">CORRECT DATA</h4>
-                <div id="reveal-answers" class="text-2xl font-bold text-white flex flex-col gap-2 clean-text"></div>
+            <div id="reveal-area" class="hidden mt-6 glass p-5 rounded-2xl border border-rose-500/30 bg-rose-950/20 text-center mx-auto max-w-2xl w-full">
+                <h4 class="text-rose-400 font-mono font-semibold mb-1.5 tracking-wider text-xs uppercase">เฉลยคำตอบที่ถูกต้อง</h4>
+                <div id="reveal-answers" class="text-xl sm:text-2xl font-bold text-white flex flex-col gap-1.5 clean-text"></div>
             </div>
 
             <!-- Bomb Animation Container -->
             <div id="bomb-anim-container" class="fixed inset-0 pointer-events-none flex items-center justify-center z-50">
-                <div id="bomb-explosion" class="hidden text-9xl">💥</div>
-                <div id="bomb-defuse" class="hidden text-9xl text-emerald-400">✓</div>
+                <div id="bomb-explosion" class="hidden text-rose-500">
+                    <div class="w-24 h-24 rounded-full bg-rose-500/20 border-2 border-rose-400 flex items-center justify-center shadow-2xl">
+                        <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </div>
+                </div>
+                <div id="bomb-defuse" class="hidden text-emerald-400">
+                    <div class="w-24 h-24 rounded-full bg-emerald-500/20 border-2 border-emerald-400 flex items-center justify-center shadow-2xl">
+                        <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                    </div>
+                </div>
             </div>
 
             <!-- Pause Modal -->
-            <div id="pause-modal" class="modal-container fixed inset-0 w-screen h-screen z-[60] bg-black/40 backdrop-blur-md transform-gpu flex items-center justify-center opacity-0 pointer-events-none transition-all duration-300">
-                <div class="glass p-10 rounded-3xl text-center max-w-md w-full border border-white/20 transform scale-95 transition-transform duration-300">
-                    <h2 class="text-4xl font-black mb-8 tracking-widest text-primary animate-pulse">PAUSED</h2>
-                    <div class="flex flex-col gap-4">
-                        <button id="btn-resume" class="py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-lg transition-colors">กลับสู่ภารกิจ</button>
-                        <button id="btn-quit" class="py-4 bg-red-600/80 hover:bg-red-500 text-white font-bold rounded-xl text-lg transition-colors border border-red-500/50">ออกและกลับเมนูหลัก</button>
+            <div id="pause-modal" class="modal-container fixed inset-0 w-screen h-screen z-[60] bg-black/60 backdrop-blur-md transform-gpu flex items-center justify-center opacity-0 pointer-events-none transition-all duration-300 p-4">
+                <div class="glass p-8 rounded-2xl text-center max-w-sm w-full border border-white/15 transform scale-95 transition-transform duration-300">
+                    <h2 class="text-2xl font-bold mb-6 tracking-tight text-white">หยุดชั่วคราว (Paused)</h2>
+                    <div class="flex flex-col gap-3">
+                        <button id="btn-resume" class="py-3 bg-primary text-slate-950 hover:bg-sky-300 font-semibold rounded-xl text-sm sm:text-base transition-colors">ทำแบบทดสอบต่อ</button>
+                        <button id="btn-quit" class="py-3 bg-white/5 hover:bg-rose-500/15 text-gray-300 hover:text-rose-300 font-semibold rounded-xl text-sm sm:text-base transition-colors border border-white/10 hover:border-rose-500/30">กลับสู่หน้าหลัก</button>
                     </div>
                 </div>
             </div>
         </main>
 
         <!-- ==================== SUMMARY SCREEN ==================== -->
-        <main id="summary-screen" class="hidden-screen flex-col items-center justify-center py-10 animate-fade-in w-full">
-            <h2 class="text-2xl sm:text-3xl md:text-5xl arcade-title mb-6 md:mb-8 text-center" style="text-shadow: 2px 2px 0 rgba(57, 255, 20, 0.4), -2px -2px 0 rgba(0, 243, 255, 0.4);">MISSION ACCOMPLISHED</h2>
+        <main id="summary-screen" class="hidden-screen flex-col items-center justify-center py-8 animate-fade-in w-full">
+            <h2 class="text-2xl sm:text-3xl arcade-title mb-6 text-center">สรุปผลการทำแบบทดสอบ</h2>
             
-            <div class="flex flex-col sm:flex-row gap-4 sm:gap-8 mb-8 md:mb-10 w-full px-8 sm:w-auto justify-center">
-                <div id="score-container" class="glass w-full sm:w-40 h-32 sm:h-40 rounded-2xl sm:rounded-full flex flex-col items-center justify-center shadow-2xl border border-white/10 relative overflow-hidden group">
-                    <div class="absolute inset-0 bg-primary/20 group-hover:bg-primary/30 transition-colors"></div>
-                    <span class="text-4xl sm:text-5xl font-black z-10" id="summary-score">0</span>
-                    <span class="text-[10px] sm:text-xs text-gray-300 font-bold tracking-widest z-10 mt-1">SCORE</span>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 w-full max-w-2xl">
+                <div id="score-container" class="glass p-5 rounded-2xl flex flex-col items-center justify-center border border-white/10">
+                    <span class="text-3xl sm:text-4xl font-bold font-mono text-primary" id="summary-score">0</span>
+                    <span class="text-xs text-gray-400 font-mono uppercase tracking-wider mt-1">Score</span>
                 </div>
-                <div class="glass w-full sm:w-40 h-32 sm:h-40 rounded-2xl sm:rounded-full flex flex-col items-center justify-center shadow-2xl border border-white/10 relative overflow-hidden group">
-                    <div class="absolute inset-0 bg-secondary/20 group-hover:bg-secondary/30 transition-colors"></div>
-                    <span class="text-3xl sm:text-4xl font-black z-10 font-mono" id="summary-time">0s</span>
-                    <span class="text-[10px] sm:text-xs text-gray-300 font-bold tracking-widest z-10 mt-1">TIME</span>
+                <div class="glass p-5 rounded-2xl flex flex-col items-center justify-center border border-white/10">
+                    <span class="text-3xl sm:text-4xl font-bold font-mono text-secondary" id="summary-time">0s</span>
+                    <span class="text-xs text-gray-400 font-mono uppercase tracking-wider mt-1">Time</span>
                 </div>
-                <div class="glass w-full sm:w-40 h-32 sm:h-40 rounded-2xl sm:rounded-full flex flex-col items-center justify-center shadow-2xl border border-red-500/30 relative overflow-hidden group">
-                    <div class="absolute inset-0 bg-red-500/10 group-hover:bg-red-500/20 transition-colors"></div>
-                    <span class="text-4xl sm:text-5xl font-black z-10 text-red-400" id="summary-wrong">0</span>
-                    <span class="text-[10px] sm:text-xs text-red-300 font-bold tracking-widest z-10 mt-1">WRONG</span>
+                <div class="glass p-5 rounded-2xl flex flex-col items-center justify-center border border-rose-500/25">
+                    <span class="text-3xl sm:text-4xl font-bold font-mono text-rose-400" id="summary-wrong">0</span>
+                    <span class="text-xs text-rose-300/80 font-mono uppercase tracking-wider mt-1">Incorrect</span>
                 </div>
             </div>
 
-            <div class="w-full max-w-4xl glass rounded-3xl p-8 mb-10 border border-white/10">
-                <h3 class="text-2xl font-bold mb-6 flex items-center"><span class="text-red-400 mr-2">⚠️</span> ANALYSIS REPORT</h3>
-                <div id="wrong-answers-list" class="space-y-4 max-h-[40vh] overflow-y-auto pr-2">
+            <div class="w-full max-w-4xl glass rounded-2xl p-6 sm:p-8 mb-8 border border-white/10">
+                <h3 class="text-lg font-bold mb-5 flex items-center text-gray-100">
+                    <svg class="w-5 h-5 text-rose-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    รายการข้อที่ควรทบทวน (Analysis Report)
+                </h3>
+                <div id="wrong-answers-list" class="space-y-3 max-h-[40vh] overflow-y-auto pr-2">
                     <!-- Wrong answers populated here -->
                 </div>
                 <div id="perfect-score-msg" class="hidden text-center py-8">
-                    <div class="text-6xl mb-4">🏆</div>
-                    <h4 class="text-2xl font-bold text-emerald-400">PERFECT! ไม่มีข้อที่ตอบผิดเลย</h4>
+                    <div class="w-14 h-14 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center mx-auto mb-3">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    </div>
+                    <h4 class="text-lg font-bold text-emerald-400">ยอดเยี่ยม ไม่มีข้อที่ตอบผิดเลย</h4>
                 </div>
-            </div>
-                </button>
             </div>
         </main>
     </div>
@@ -771,24 +833,24 @@
         
         <!-- Database Modal -->
         <div id="database-modal" class="modal-container fixed inset-0 z-50 bg-bgDark/90 flex items-center justify-center opacity-0 pointer-events-none p-4">
-            <div class="bg-surface w-full max-w-6xl h-[90vh] rounded-3xl shadow-2xl border border-white/10 flex flex-col overflow-hidden transform scale-95 transition-transform duration-300 relative">
+            <div class="bg-surface w-full max-w-6xl h-[90vh] rounded-2xl shadow-2xl border border-white/10 flex flex-col overflow-hidden transform scale-95 transition-transform duration-300 relative">
                 
                 <!-- Header -->
-                <div class="p-4 md:p-6 border-b border-white/10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-black/20">
+                <div class="p-4 md:p-5 border-b border-white/10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-black/20">
                     <div class="flex flex-col w-full sm:w-auto">
                         <div class="flex justify-between items-center w-full">
-                            <h2 class="text-xl md:text-2xl font-black flex items-center"><svg class="w-6 h-6 md:w-7 md:h-7 mr-2 md:mr-3 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg> DATABASE</h2>
-                            <button class="btn-close-modal p-2 hover:bg-white/10 rounded-full transition-colors sm:hidden" data-target="database-modal">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            <h2 class="text-lg md:text-xl font-bold flex items-center"><svg class="w-5 h-5 mr-2.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg> คลังข้อสอบ (Database)</h2>
+                            <button class="btn-close-modal p-2 hover:bg-white/10 rounded-lg transition-colors sm:hidden" data-target="database-modal">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                             </button>
                         </div>
-                        <p class="text-[10px] sm:text-xs text-primary mt-1 opacity-80">* ติ๊กถูก ✔️ ที่โฟลเดอร์เพื่อส่งไปเล่นในเกม</p>
+                        <p class="text-xs text-gray-400 mt-1">เลือกช่องด้านหน้าโฟลเดอร์ที่ต้องการนำมาใช้ในแบบทดสอบ</p>
                     </div>
                     <div class="flex gap-2 w-full sm:w-auto">
-                        <button id="btn-new-folder" class="flex-1 sm:flex-none justify-center px-2 md:px-4 py-2 bg-primary hover:bg-indigo-500 rounded-lg font-bold text-xs md:text-sm flex items-center transition-colors"><span class="mr-1">+</span> NEW FOLDER</button>
-                        <button id="btn-new-cat" class="flex-1 sm:flex-none justify-center px-2 md:px-4 py-2 bg-secondary hover:bg-pink-500 rounded-lg font-bold text-xs md:text-sm flex items-center transition-colors"><span class="mr-1">+</span> NEW CAT</button>
-                        <button class="btn-close-modal p-2 hover:bg-white/10 rounded-full transition-colors hidden sm:block" data-target="database-modal">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        <button id="btn-new-folder" class="flex-1 sm:flex-none justify-center px-3.5 py-2 bg-primary text-slate-950 hover:bg-sky-300 rounded-lg font-semibold text-xs sm:text-sm flex items-center transition-colors"><span class="mr-1">+</span> สร้างโฟลเดอร์</button>
+                        <button id="btn-new-cat" class="flex-1 sm:flex-none justify-center px-3.5 py-2 bg-white/10 hover:bg-white/15 text-white border border-white/10 rounded-lg font-semibold text-xs sm:text-sm flex items-center transition-colors"><span class="mr-1">+</span> สร้างหมวดหมู่</button>
+                        <button class="btn-close-modal p-2 hover:bg-white/10 rounded-lg transition-colors hidden sm:block text-gray-400 hover:text-white" data-target="database-modal">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                         </button>
                     </div>
                 </div>
@@ -796,96 +858,97 @@
                 <!-- Body (2 columns) -->
                 <div class="flex-1 flex overflow-hidden flex-col md:flex-row" id="database-layout-container">
                     <!-- Left: Uncategorized -->
-                    <div id="database-uncat-area" class="w-full md:w-1/3 border-r border-white/10 p-6 flex flex-col bg-black/10 flex-shrink-0">
-                        <h3 class="font-bold text-gray-400 mb-4 tracking-wider text-sm flex items-center justify-between">
-                            <span>UNCATEGORIZED FOLDERS</span>
-                            <span class="text-xs bg-white/10 px-2 py-1 rounded" id="uncat-count">0</span>
+                    <div id="database-uncat-area" class="w-full md:w-1/3 border-r border-white/10 p-5 flex flex-col bg-black/10 flex-shrink-0">
+                        <h3 class="font-semibold text-gray-400 mb-3 tracking-wider text-xs uppercase flex items-center justify-between">
+                            <span>Uncategorized Folders</span>
+                            <span class="text-xs font-mono bg-white/10 px-2 py-0.5 rounded" id="uncat-count">0</span>
                         </h3>
-                        <div id="uncategorized-list" class="flex-1 overflow-y-scroll space-y-3 pr-2 drop-zone min-h-[100px]">
+                        <div id="uncategorized-list" class="flex-1 overflow-y-scroll space-y-2.5 pr-2 drop-zone min-h-[100px]">
                             <!-- Folders go here -->
                         </div>
                     </div>
                     
                     <!-- Mobile Resizer (Vertical) -->
-                    <div id="database-resizer-v" class="md:hidden w-full h-8 flex items-center justify-center bg-black/60 border-y border-white/10 cursor-ns-resize active:bg-white/10 touch-none shadow-[0_0_15px_rgba(0,0,0,0.8)] z-10 flex-shrink-0" title="เลื่อนขึ้นลงเพื่อปรับขนาด">
-                        <div class="w-16 h-1.5 bg-gray-400 rounded-full"></div>
+                    <div id="database-resizer-v" class="md:hidden w-full h-7 flex items-center justify-center bg-black/60 border-y border-white/10 cursor-ns-resize active:bg-white/10 touch-none z-10 flex-shrink-0" title="เลื่อนขึ้นลงเพื่อปรับขนาด">
+                        <div class="w-12 h-1 bg-gray-500 rounded-full"></div>
                     </div>
                     
                     <!-- Desktop Resizer (Horizontal) -->
-                    <div id="database-resizer-h" class="hidden md:flex w-2 h-full bg-black/40 hover:bg-white/20 active:bg-white/30 cursor-col-resize touch-none z-10 flex-shrink-0 flex-col justify-center items-center group shadow-[0_0_10px_rgba(0,0,0,0.5)]" title="เลื่อนซ้ายขวาเพื่อปรับขนาด">
-                        <div class="h-16 w-0.5 bg-gray-500 rounded-full group-hover:bg-gray-300"></div>
+                    <div id="database-resizer-h" class="hidden md:flex w-2 h-full bg-black/40 hover:bg-white/20 active:bg-white/30 cursor-col-resize touch-none z-10 flex-shrink-0 flex-col justify-center items-center group" title="เลื่อนซ้ายขวาเพื่อปรับขนาด">
+                        <div class="h-12 w-0.5 bg-gray-600 rounded-full group-hover:bg-gray-300"></div>
                     </div>
 
                     <!-- Right: Categories -->
-                    <div id="database-cat-area" class="w-full md:w-2/3 p-6 flex flex-col bg-surface overflow-hidden flex-shrink-0">
-                        <h3 class="font-bold text-gray-400 mb-4 tracking-wider text-sm">CATEGORIES</h3>
-                        <div id="categories-list" class="flex-1 overflow-y-scroll space-y-6 pr-2">
+                    <div id="database-cat-area" class="w-full md:w-2/3 p-5 flex flex-col bg-surface overflow-hidden flex-shrink-0">
+                        <h3 class="font-semibold text-gray-400 mb-3 tracking-wider text-xs uppercase">Categories</h3>
+                        <div id="categories-list" class="flex-1 overflow-y-scroll space-y-5 pr-2">
                             <!-- Categories go here -->
                         </div>
                     </div>
                 </div>
-                
-
             </div>
         </div>
 
         <!-- Streak Modals -->
         <div id="streak-map-modal" class="modal-container fixed inset-0 z-[60] bg-bgDark/95 flex items-center justify-center opacity-0 pointer-events-none p-4">
-            <div class="bg-surface border border-white/10 rounded-3xl shadow-2xl p-6 w-full max-w-sm transform transition-all duration-300 relative text-center overflow-hidden">
+            <div class="bg-surface border border-white/10 rounded-2xl shadow-2xl p-6 w-full max-w-sm transform transition-all duration-300 relative text-center overflow-hidden">
                 <button data-target="streak-map-modal" class="btn-close-modal absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
-                <div class="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-orange-500/20 to-transparent pointer-events-none"></div>
-                <div class="text-6xl mb-4 mt-8 drop-shadow-[0_0_15px_rgba(249,115,22,0.5)]">🔥</div>
-                <h3 class="text-2xl font-bold text-white mb-2 word-font">การเดินทางของคุณ</h3>
-                <p class="text-gray-300 mb-6 text-sm">เข้าเล่นเกมต่อเนื่องเพื่อสะสมสถิติ!</p>
-                <div class="bg-bgDark/50 rounded-2xl p-6 border border-white/5 relative">
-                    <div class="text-sm text-gray-400 mb-1">สถิติปัจจุบัน</div>
+                <div class="w-14 h-14 rounded-2xl bg-orange-500/15 border border-orange-500/30 text-orange-400 flex items-center justify-center mx-auto mb-4 mt-4">
+                    <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"/></svg>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-1 word-font">สถิติความต่อเนื่อง</h3>
+                <p class="text-gray-400 mb-5 text-xs">เข้าทำแบบทดสอบทุกวันเพื่อสะสมสถิติต่อเนื่อง</p>
+                <div class="bg-bgDark/60 rounded-xl p-5 border border-white/5 relative">
+                    <div class="text-xs text-gray-400 mb-1">สถิติปัจจุบัน</div>
                     <div class="text-4xl font-bold text-orange-400 font-mono" id="streak-map-current">0</div>
-                    <div class="text-sm font-bold text-gray-500 mt-1">วันต่อเนื่อง</div>
-                    <div class="mt-4 pt-4 border-t border-white/10 flex justify-between text-xs">
+                    <div class="text-xs font-medium text-gray-500 mt-1">วันติดต่อกัน</div>
+                    <div class="mt-4 pt-3 border-t border-white/10 flex justify-between text-xs">
                         <span class="text-gray-400">สถิติสูงสุด:</span>
-                        <span class="text-white font-bold" id="streak-map-max">0 วัน</span>
+                        <span class="text-white font-semibold" id="streak-map-max">0 วัน</span>
                     </div>
                 </div>
             </div>
         </div>
 
         <div id="streak-celebration-modal" class="modal-container fixed inset-0 z-[70] bg-bgDark/95 flex items-center justify-center opacity-0 pointer-events-none p-4">
-            <div class="bg-surface border border-orange-500/30 rounded-3xl shadow-[0_0_50px_rgba(249,115,22,0.2)] p-8 w-full max-w-sm transform transition-all duration-500 relative text-center">
+            <div class="bg-surface border border-orange-500/30 rounded-2xl shadow-2xl p-7 w-full max-w-sm transform transition-all duration-300 relative text-center">
                 <button data-target="streak-celebration-modal" class="btn-close-modal absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
-                <div class="text-8xl mb-6 animate-bounce drop-shadow-[0_0_30px_rgba(249,115,22,0.8)]">🔥</div>
-                <h3 class="text-3xl font-bold text-white mb-2 word-font">ยอดเยี่ยมมาก!</h3>
-                <p class="text-orange-200 mb-6 text-lg">คุณทำสถิติเล่นต่อเนื่องได้</p>
-                <div class="text-6xl font-bold text-orange-400 font-mono mb-2 drop-shadow-[0_0_15px_rgba(249,115,22,0.5)]"><span id="celeb-streak-count">0</span></div>
-                <p class="text-orange-200 text-lg mb-8">วันแล้ว!</p>
-                <button class="btn-close-modal w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-bold text-lg hover:from-orange-400 hover:to-red-400 transition-all shadow-lg shadow-orange-500/20" data-target="streak-celebration-modal">ทำต่อไป!</button>
+                <div class="w-16 h-16 rounded-2xl bg-orange-500/15 border border-orange-500/30 text-orange-400 flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-9 h-9" fill="currentColor" viewBox="0 0 24 24"><path d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"/></svg>
+                </div>
+                <h3 class="text-2xl font-bold text-white mb-1 word-font">สะสมสถิติต่อเนื่องสำเร็จ</h3>
+                <p class="text-gray-400 mb-4 text-sm">คุณทำแบบทดสอบต่อเนื่องครบ</p>
+                <div class="text-5xl font-bold text-orange-400 font-mono mb-1"><span id="celeb-streak-count">0</span></div>
+                <p class="text-gray-300 text-sm mb-6">วันติดต่อกัน</p>
+                <button class="btn-close-modal w-full py-3 bg-orange-500 hover:bg-orange-400 text-slate-950 rounded-xl font-bold text-sm transition-all" data-target="streak-celebration-modal">ดำเนินการต่อ</button>
             </div>
         </div>
 
         <!-- Question Editor Modal -->
         <div id="editor-modal" class="modal-container fixed inset-0 z-[55] bg-bgDark/95 flex items-center justify-center opacity-0 pointer-events-none p-4">
-            <div class="bg-surface w-full max-w-5xl h-[90vh] rounded-3xl shadow-2xl border border-white/10 flex flex-col overflow-hidden transform scale-95 transition-transform duration-300">
+            <div class="bg-surface w-full max-w-5xl h-[90vh] rounded-2xl shadow-2xl border border-white/10 flex flex-col overflow-hidden transform scale-95 transition-transform duration-300">
                 
                 <!-- Header -->
-                <div class="p-4 md:p-6 border-b border-white/10 flex flex-col md:flex-row gap-4 justify-between md:items-center bg-black/20">
+                <div class="p-4 md:p-5 border-b border-white/10 flex flex-col md:flex-row gap-4 justify-between md:items-center bg-black/20">
                     <div class="flex items-center gap-2 md:gap-3">
-                        <button id="btn-back-to-db" onclick="window.backToDb()" class="p-1.5 md:p-2 hover:bg-white/10 rounded-full transition-colors mr-1 md:mr-2">
-                            <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                        <button id="btn-back-to-db" onclick="window.backToDb()" class="p-1.5 md:p-2 hover:bg-white/10 rounded-lg transition-colors mr-1">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
                         </button>
-                        <h2 class="text-lg md:text-2xl font-black text-primary truncate max-w-[200px] sm:max-w-[400px]" id="editor-folder-name">Folder Name</h2>
+                        <h2 class="text-lg md:text-xl font-bold text-primary truncate max-w-[200px] sm:max-w-[400px]" id="editor-folder-name">Folder Name</h2>
                         <button id="btn-rename-folder" class="p-1.5 hover:bg-white/10 rounded transition-colors text-gray-400 hover:text-white" title="Rename Folder"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button>
                     </div>
                     <div class="flex flex-wrap gap-3 items-center justify-between md:justify-end">
-                        <span class="text-xs md:text-sm text-gray-400 font-mono bg-black/30 px-2 py-1 md:px-3 md:py-1 rounded-lg">ID: <span id="editor-folder-id"></span></span>
-                        <div class="flex items-center gap-1 md:gap-2">
-                            <button id="btn-delete-folder" class="p-1.5 md:p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors border border-transparent hover:border-red-500/30" title="Delete Folder">
+                        <span class="text-xs text-gray-400 font-mono bg-black/30 px-2.5 py-1 rounded-md">ID: <span id="editor-folder-id"></span></span>
+                        <div class="flex items-center gap-1.5">
+                            <button id="btn-delete-folder" class="p-1.5 md:p-2 text-rose-400 hover:bg-rose-500/15 rounded-lg transition-colors border border-transparent hover:border-rose-500/30" title="Delete Folder">
                                 <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                             </button>
-                            <button onclick="window.closeEditor()" class="p-1.5 md:p-2 hover:bg-white/10 rounded-full transition-colors">
-                                <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            <button onclick="window.closeEditor()" class="p-1.5 md:p-2 hover:bg-white/10 rounded-lg transition-colors text-gray-400 hover:text-white">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                             </button>
                         </div>
                     </div>
@@ -893,31 +956,31 @@
 
                 <div class="flex-1 flex flex-col md:flex-row overflow-hidden" id="editor-layout-container">
                     <!-- Form Area -->
-                    <div id="editor-form-area" class="w-full md:w-1/3 border-r border-white/10 p-6 bg-black/20 overflow-y-auto flex-shrink-0">
-                        <h3 class="font-bold mb-4 flex items-center justify-between" id="editor-form-title">
-                            <span class="text-secondary">ADD DATA</span>
+                    <div id="editor-form-area" class="w-full md:w-1/3 border-r border-white/10 p-5 bg-black/20 overflow-y-auto flex-shrink-0">
+                        <h3 class="font-semibold text-sm uppercase tracking-wider mb-4 flex items-center justify-between" id="editor-form-title">
+                            <span class="text-secondary">เพิ่มข้อสอบ (Add Question)</span>
                             <button id="btn-cancel-edit" class="hidden text-xs text-gray-400 hover:text-white underline">Cancel Edit</button>
                         </h3>
                         <div class="space-y-4">
                             <div>
                                 <div class="flex items-center justify-between mb-1">
-                                    <label class="block text-xs font-bold text-gray-400">QUESTION</label>
+                                    <label class="block text-xs font-semibold text-gray-400">QUESTION</label>
                                     <div class="flex gap-1">
-                                        <button class="format-btn format-sup px-2 py-0.5 rounded text-xs font-bold" onmousedown="event.preventDefault(); toggleFormatMode('superscript');" title="Superscript">X²</button>
-                                        <button class="format-btn format-sub px-2 py-0.5 rounded text-xs font-bold" onmousedown="event.preventDefault(); toggleFormatMode('subscript');" title="Subscript">X₂</button>
+                                        <button class="format-btn format-sup px-2 py-0.5 rounded text-xs font-mono font-bold" onmousedown="event.preventDefault(); toggleFormatMode('superscript');" title="Superscript">X²</button>
+                                        <button class="format-btn format-sub px-2 py-0.5 rounded text-xs font-mono font-bold" onmousedown="event.preventDefault(); toggleFormatMode('subscript');" title="Subscript">X₂</button>
                                     </div>
                                 </div>
-                                <div id="edit-q" contenteditable="true" class="w-full bg-surface border border-white/20 rounded-lg p-3 text-sm focus:outline-none focus:border-secondary word-font clean-text" placeholder="Enter question..." style="min-height: 80px;"></div>
+                                <div id="edit-q" contenteditable="true" class="w-full bg-surface border border-white/15 rounded-lg p-3 text-sm focus:outline-none focus:border-secondary word-font clean-text" placeholder="พิมพ์โจทย์คำถาม..." style="min-height: 80px;"></div>
                             </div>
                             <!-- Image Upload -->
                             <div class="mt-2">
-                                <label class="block text-xs font-bold text-gray-400 mb-1 flex items-center justify-between">
+                                <label class="block text-xs font-semibold text-gray-400 mb-1 flex items-center justify-between">
                                     <span>IMAGE (OPTIONAL) <span id="img-count-badge" class="ml-1 text-[11px] text-secondary font-medium"></span></span>
                                     <span class="text-[10px] text-gray-400 font-normal">เพิ่มได้หลายรูป</span>
                                 </label>
                                 <div class="flex flex-wrap items-center gap-2">
                                     <label class="cursor-pointer bg-white/5 hover:bg-white/10 active:scale-95 border border-dashed border-white/20 hover:border-secondary px-3 py-2 rounded-lg text-xs text-gray-300 transition-all flex items-center shadow-sm flex-shrink-0">
-                                        <svg class="w-4 h-4 mr-1 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                        <svg class="w-4 h-4 mr-1.5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                         เพิ่มรูปภาพ
                                         <input type="file" id="edit-img-input" accept="image/jpeg, image/png, image/webp" multiple class="hidden">
                                     </label>
@@ -925,30 +988,30 @@
                                 </div>
                             </div>
                             <div id="answers-container" class="space-y-2">
-                                <label class="block text-xs font-bold text-gray-400 mb-1">ANSWERS</label>
+                                <label class="block text-xs font-semibold text-gray-400 mb-1">ANSWERS</label>
                                 <!-- Answer inputs injected here -->
                             </div>
-                            <button id="btn-add-answer" class="w-full py-2 bg-white/5 hover:bg-white/10 border border-dashed border-white/20 rounded-lg text-sm text-gray-300 transition-colors">+ Add Answer Option</button>
-                            <button id="btn-save-data" class="w-full py-3 bg-secondary hover:bg-pink-600 text-white font-bold rounded-xl mt-6 shadow-lg transition-transform transform active:scale-95">ADD TO FOLDER</button>
+                            <button id="btn-add-answer" class="w-full py-2 bg-white/5 hover:bg-white/10 border border-dashed border-white/20 rounded-lg text-xs text-gray-300 transition-colors">+ เพิ่มตัวเลือกคำตอบ</button>
+                            <button id="btn-save-data" class="w-full py-3 bg-secondary hover:bg-pink-500 text-slate-950 font-bold rounded-xl mt-6 shadow-md transition-transform transform active:scale-95 text-sm">บันทึกเข้าโฟลเดอร์ (Add to Folder)</button>
                         </div>
                     </div>
                     
                     <!-- Mobile Resizer -->
-                    <div id="mobile-resizer" class="md:hidden w-full h-8 flex items-center justify-center bg-black/60 border-y border-white/10 cursor-ns-resize active:bg-white/10 touch-none shadow-[0_0_15px_rgba(0,0,0,0.8)] z-10 flex-shrink-0" title="เลื่อนขึ้นลงเพื่อปรับขนาด">
-                        <div class="w-16 h-1.5 bg-gray-400 rounded-full"></div>
+                    <div id="mobile-resizer" class="md:hidden w-full h-7 flex items-center justify-center bg-black/60 border-y border-white/10 cursor-ns-resize active:bg-white/10 touch-none z-10 flex-shrink-0" title="เลื่อนขึ้นลงเพื่อปรับขนาด">
+                        <div class="w-12 h-1 bg-gray-500 rounded-full"></div>
                     </div>
                     
                     <!-- Desktop Resizer -->
-                    <div id="editor-resizer-h" class="hidden md:flex w-2 h-full bg-black/40 hover:bg-white/20 active:bg-white/30 cursor-col-resize touch-none z-10 flex-shrink-0 flex-col justify-center items-center group shadow-[0_0_10px_rgba(0,0,0,0.5)]" title="เลื่อนซ้ายขวาเพื่อปรับขนาด">
-                        <div class="h-16 w-0.5 bg-gray-500 rounded-full group-hover:bg-gray-300"></div>
+                    <div id="editor-resizer-h" class="hidden md:flex w-2 h-full bg-black/40 hover:bg-white/20 active:bg-white/30 cursor-col-resize touch-none z-10 flex-shrink-0 flex-col justify-center items-center group" title="เลื่อนซ้ายขวาเพื่อปรับขนาด">
+                        <div class="h-12 w-0.5 bg-gray-600 rounded-full group-hover:bg-gray-300"></div>
                     </div>
                     
                     <!-- Questions List Area -->
-                    <div id="editor-list-area" class="w-full md:w-2/3 p-6 flex flex-col overflow-hidden flex-shrink-0">
+                    <div id="editor-list-area" class="w-full md:w-2/3 p-5 flex flex-col overflow-hidden flex-shrink-0">
                         <div class="flex justify-between items-center mb-4">
                             <div>
-                                <h3 class="font-bold text-gray-400 tracking-wider text-sm">DATA LIST (<span id="q-count">0</span>)</h3>
-                                <p class="text-[10px] text-accent opacity-80 mt-1">* ติ๊กถูก ✔️ เพื่อคัดเลือกข้อนี้ (ใช้ร่วมกับโหมด Question Filter)</p>
+                                <h3 class="font-semibold text-gray-300 tracking-wider text-xs uppercase">รายการคำถาม (<span id="q-count">0</span>)</h3>
+                                <p class="text-[11px] text-gray-400 mt-0.5">เลือกช่องหน้าข้อสอบเพื่อคัดเลือกเฉพาะข้อที่ต้องการใช้ในโหมด Question Filter</p>
                             </div>
                             <div class="flex items-center space-x-2">
                                 <span class="text-xs text-gray-400">Select All</span>
@@ -1343,8 +1406,8 @@
                 <div class="mx-auto w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mb-6 text-blue-400">
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
                 </div>
-                <h3 class="font-black text-2xl mb-3 text-white">LOGIN REQUIRED</h3>
-                <p class="text-gray-300 text-sm mb-6 leading-relaxed">เข้าสู่ระบบเพื่อซิงค์ข้อมูลของคุณผ่าน Cloud เพื่อเล่นข้ามอุปกรณ์<br><br><span class="text-red-400 font-bold bg-red-500/10 p-2 rounded-lg inline-block border border-red-500/30">⚠️ คำเตือน: หากกดกากบาทเพื่อทดลองเล่น ข้อมูลที่บันทึกไว้จะสูญหายทันทีเมื่อคุณ Login ภายหลัง</span></p>
+                <h3 class="font-bold text-xl mb-3 text-white">เข้าสู่ระบบ (Sign In Required)</h3>
+                <p class="text-gray-300 text-sm mb-6 leading-relaxed">เข้าสู่ระบบเพื่อซิงค์ข้อมูลของคุณผ่าน Cloud เพื่อเล่นข้ามอุปกรณ์<br><br><span class="text-rose-400 font-medium bg-rose-500/10 p-2.5 rounded-lg inline-block border border-rose-500/25 text-xs">คำเตือน: หากกดกากบาทเพื่อทดลองเล่น ข้อมูลที่บันทึกไว้จะสูญหายทันทีเมื่อคุณ Login ภายหลัง</span></p>
                 <div class="flex flex-col gap-3">
                     <button id="btn-auto-login-google" class="w-full py-3.5 bg-white text-gray-900 font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-gray-200 transition-colors">
                         <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="currentColor" d="M21.35,11.1H12.18V13.83H18.69C18.36,17.64 15.19,19.27 12.19,19.27C8.36,19.27 5,16.25 5,12C5,7.9 8.2,4.73 12.2,4.73C15.29,4.73 17.1,6.7 17.1,6.7L19,4.72C19,4.72 16.56,2 12.1,2C6.42,2 2.03,6.8 2.03,12C2.03,17.05 6.16,22 12.25,22C17.6,22 21.5,18.33 21.5,12.91C21.5,11.76 21.35,11.1 21.35,11.1V11.1Z"/></svg>
@@ -2059,7 +2122,7 @@
             } catch (e) {
                 console.error("Cloud sync error:", e);
                 if(e.message && (e.message.includes('exceeds the maximum allowed size') || e.message.includes('1,048,576 bytes'))) {
-                    customAlert("⚠️ ไม่สามารถบันทึกขึ้น Cloud ได้! (ขนาดโฟลเดอร์เกิน 1MB)<br><br>สาเหตุ: รูปภาพที่สะสมในหมวดหมู่นี้มีขนาดรวมกันใหญ่เกินไป<br><br>วิธีแก้: ลบรูปภาพล่าสุดออก แล้วอัพโหลดใหม่ (ระบบอัพเดทการบีบอัดใหม่แล้วจะช่วยให้เล็กลง)");
+                    customAlert("ไม่สามารถบันทึกขึ้น Cloud ได้ (ขนาดโฟลเดอร์เกิน 1MB)<br><br>สาเหตุ: รูปภาพที่สะสมในหมวดหมู่นี้มีขนาดรวมกันใหญ่เกินไป<br><br>วิธีแก้: ลบรูปภาพล่าสุดออก แล้วอัพโหลดใหม่ (ระบบอัพเดทการบีบอัดใหม่แล้วจะช่วยให้เล็กลง)");
                 }
             }
         };
@@ -2684,7 +2747,7 @@
                         <input type="checkbox" class="custom-checkbox w-5 h-5 rounded border-gray-500 cursor-pointer" ${q.isSelected ? 'checked' : ''} onchange="window.toggleQSelection('${q.id}', this.checked)">
                     </div>
                     <div class="flex-1 overflow-hidden">
-                        ${isGrouped ? `<div class="text-[10px] text-emerald-400 font-bold mb-1 tracking-wider uppercase">🔗 คำถามซ้ำ (จะถูกรวมอัตโนมัติในเกม)</div>` : ''}
+                        ${isGrouped ? `<div class="text-[10px] text-emerald-400 font-semibold mb-1 tracking-wider uppercase">คำถามซ้ำ (จะถูกรวมอัตโนมัติในเกม)</div>` : ''}
                         <div class="font-bold text-sm mb-1 clean-text flex items-start gap-2">
                             ${(() => {
                                 const qImgs = (q.imgs && Array.isArray(q.imgs) && q.imgs.length > 0) ? q.imgs : (q.img ? [q.img] : []);
@@ -3822,7 +3885,7 @@
                 // Show the actual answered text in the correct-answers list
                 const correctList = getEl('correct-answers-list');
                 const li = document.createElement('li');
-                li.innerHTML = `<span class="inline-flex items-center gap-1 px-4 py-1.5 bg-emerald-500/20 text-emerald-400 rounded-full text-sm font-semibold word-font">✓ <span>${formatGameText(q.a[matchedIdx])}</span></span>`;
+                li.innerHTML = `<span class="inline-flex items-center gap-1.5 px-4 py-1.5 bg-emerald-500/20 text-emerald-400 rounded-full text-sm font-semibold word-font"><svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg><span>${formatGameText(q.a[matchedIdx])}</span></span>`;
                 correctList.appendChild(li);
 
                 // Remove one pending-badge dot
@@ -3973,7 +4036,7 @@
             }
             if (getEl('question-card-flip-pill')) getEl('question-card-flip-pill').classList.add('hidden');
             if (getEl('question-card-mobile-hint')) getEl('question-card-mobile-hint').classList.add('hidden');
-            getEl('game-current-q').innerText = (correctItems.length - index) + ' \u2705';
+            getEl('game-current-q').innerText = (correctItems.length - index) + ' (REVIEW)';
             
             const qImgContainer = getEl('question-image-container');
             if (qImgContainer) {
@@ -4244,10 +4307,10 @@
                     backWrap.classList.add('flex');
                 }
                 if (flipPill) {
-                    flipPill.className = "mb-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tracking-wider uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 pointer-events-none select-none";
-                    flipPill.innerHTML = `<span>✨ เฉลยคำตอบ • แตะการ์ดเพื่อพลิกดูโจทย์</span>`;
+                    flipPill.className = "mb-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-medium tracking-wide bg-emerald-500/15 text-emerald-300 border border-emerald-400/35 pointer-events-none select-none";
+                    flipPill.innerHTML = `<span>เฉลยคำตอบ • แตะการ์ดเพื่อพลิกดูโจทย์</span>`;
                 }
-                if (tapHint) tapHint.textContent = "👆 แตะเพื่อดูโจทย์";
+                if (tapHint) tapHint.textContent = "แตะเพื่อดูโจทย์";
                 card.style.setProperty('border-color', 'rgba(16, 185, 129, 0.45)', 'important');
             } else {
                 // Showing Question Side
@@ -4264,10 +4327,10 @@
                     }
                 }
                 if (flipPill) {
-                    flipPill.className = "mb-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tracking-wider uppercase bg-primary/15 text-primary border border-primary/30 pointer-events-none select-none";
-                    flipPill.innerHTML = `<span>📖 โจทย์คำถาม • แตะการ์ดเพื่อพลิกดูเฉลย</span>`;
+                    flipPill.className = "mb-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-medium tracking-wide bg-primary/10 text-primary border border-primary/25 pointer-events-none select-none";
+                    flipPill.innerHTML = `<span>โจทย์คำถาม • แตะการ์ดเพื่อพลิกดูเฉลย</span>`;
                 }
-                if (tapHint) tapHint.textContent = "👆 แตะเพื่อพลิกคำตอบ";
+                if (tapHint) tapHint.textContent = "แตะเพื่อพลิกคำตอบ";
                 card.style.removeProperty('border-color');
             }
         }
@@ -4800,7 +4863,7 @@
                     item.className = 'relative group';
                     item.innerHTML = `
                         <img src="${img}" class="h-10 w-10 object-cover rounded border border-white/20 cursor-pointer hover:opacity-80 transition-opacity" onclick="event.stopPropagation(); window.openEditingZoom(${idx})" title="คลิกดูภาพใหญ่">
-                        <button type="button" class="absolute -top-1.5 -right-1.5 bg-red-500 hover:bg-red-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] font-bold shadow transition-transform active:scale-90" onclick="window.removeEditingImage(${idx})" title="ลบภาพนี้">✕</button>
+                        <button type="button" class="absolute -top-1.5 -right-1.5 bg-red-500 hover:bg-red-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] font-bold shadow transition-transform active:scale-90" onclick="window.removeEditingImage(${idx})" title="ลบภาพนี้"><svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
                     `;
                     container.appendChild(item);
                 });

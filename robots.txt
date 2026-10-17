@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://sirasitragtong-cmd.github.io/daily-puzzle-quiz/sitemap.xml
